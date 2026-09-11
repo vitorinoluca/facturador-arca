@@ -39,7 +39,13 @@ npm run dev                   # http://localhost:3000
 `@afipsdk/afip.js` pasa por su proxy en vez de hablar directo con los webservices de ARCA.
 
 `AFIP_APP_CERT`/`AFIP_APP_KEY` son el certificado propio de la app (generado en ARCA, una vez),
-con los saltos de línea como `\n` literal en una sola línea de env var.
+con los saltos de línea como `\n` literal en una sola línea de env var. `AFIP_APP_CUIT` es el CUIT
+dueño de ese certificado.
+
+Para que el botón "Buscar datos" (autocompleta razón social/domicilio/inicio de actividades desde
+la Constancia de Inscripción) funcione, ese mismo certificado necesita estar autorizado además al
+servicio **`ws_sr_constancia_inscripcion`** en ARCA (autorización separada de `wsfe`, mismo trámite
+del Administrador de Relaciones / WSASS).
 
 ## Tests
 

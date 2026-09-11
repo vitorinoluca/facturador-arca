@@ -46,6 +46,12 @@ function buildAfipClient(creds: { cuit: string; environment: 'testing' | 'produc
   });
 }
 
+export interface TaxpayerLookupResult {
+  businessName: string;
+  address: string;
+  activityStartDate?: string; // yyyy-mm-dd
+}
+
 function extractErrorDetail(err: unknown): string {
   // el interceptor de axios.js de @afipsdk/afip.js reescribe los errores HTTP del
   // proxy de afipsdk.com como { message, status, data }, no como AxiosError normal
@@ -213,5 +219,44 @@ export class AfipClientService {
     }
 
     return result.file;
+  }
+
+  // Consulta la Constancia de Inscripción del CUIT dado (ws_sr_constancia_inscripcion)
+  // para autocompletar razón social, domicilio e inicio de actividades — evita que el
+  // usuario tenga que tipearlos a mano. Requiere que el certificado de la app esté
+  // autorizado a este servicio en ARCA (autorización separada de wsfe).
+  // ponytail: el shape exacto de la respuesta de ARCA no está 100% documentado por
+  // afipsdk — se probaron los caminos más comunes de la spec de constancia de
+  // inscripción; si ARCA cambia el formato, esto puede necesitar un ajuste.
+  async lookupTaxpayer(cuit: string, environment: 'testing' | 'production'): Promise<TaxpayerLookupResult | null> {
+    const appCuit = process.env.AFIP_APP_CUIT;
+    if (!appCuit) {
+      throw new Error('AFIP_APP_CUIT no está configurado en el servidor');
+    }
+    const afip = buildAfipClient({ cuit: appCuit, environment });
+
+    let details: unknown;
+    try {
+      details = await afip.RegisterInscriptionProof.getTaxpayerDetails(Number(cuit));
+    } catch (err) {
+      throw new Error(extractErrorDetail(err));
+    }
+    if (!details) return null;
+
+    const persona = (details as { datosGenerales?: Record<string, unknown> }).datosGenerales ?? details;
+    const p = persona as Record<string, unknown>;
+
+    const businessName =
+      (p.razonSocial as string) ?? [p.nombre, p.apellido].filter(Boolean).join(' ').trim() ?? '';
+
+    const domicilio = (p.domicilioFiscal ?? {}) as Record<string, unknown>;
+    const address = [domicilio.direccion, domicilio.localidad, domicilio.descripcionProvincia]
+      .filter(Boolean)
+      .join(', ');
+
+    const fechaInicio = (p.fechaInicioActividad as string) ?? (p.fechaInscripcion as string) ?? undefined;
+    const activityStartDate = fechaInicio ? fechaInicio.slice(0, 10) : undefined;
+
+    return { businessName, address, activityStartDate };
   }
 }

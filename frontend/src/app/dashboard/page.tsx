@@ -174,6 +174,28 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [activityStartDate, setActivityStartDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+
+  async function handleLookup() {
+    if (!/^\d{11}$/.test(cuit)) {
+      setError("Ingresá un CUIT válido (11 dígitos) antes de buscar");
+      return;
+    }
+    setError(null);
+    setLookingUp(true);
+    try {
+      const data = await api<{ businessName: string; address: string; activityStartDate?: string }>(
+        `/afip-credentials/lookup/${cuit}?environment=${environment}`,
+      );
+      setBusinessName(data.businessName);
+      setAddress(data.address);
+      if (data.activityStartDate) setActivityStartDate(data.activityStartDate);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLookingUp(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -213,13 +235,23 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
 
       <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
         <Field label="CUIT" hint="El que usaste para delegar en ARCA">
-          <input
-            placeholder="20460137749"
-            value={cuit}
-            onChange={(e) => setCuit(e.target.value)}
-            required
-            className={inputClass}
-          />
+          <div className="flex gap-2">
+            <input
+              placeholder="20460137749"
+              value={cuit}
+              onChange={(e) => setCuit(e.target.value)}
+              required
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={handleLookup}
+              disabled={lookingUp}
+              className="shrink-0 border border-line px-3 text-xs text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-50"
+            >
+              {lookingUp ? "Buscando..." : "Buscar datos"}
+            </button>
+          </div>
         </Field>
 
         <Field label="Razón social" hint="Va impresa en el PDF de la factura">
