@@ -5,6 +5,45 @@ function formatDateYYYYMMDD(date: Date): string {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
+function formatDateDDMMYYYY(date: Date): string {
+  const [y, m, d] = date.toISOString().slice(0, 10).split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function buildAfipClient(creds: { cuit: string; cert: string; key: string; environment: 'testing' | 'production' }) {
+  return new Afip({
+    CUIT: creds.cuit,
+    cert: creds.cert,
+    key: creds.key,
+    production: creds.environment === 'production',
+    // esta versión del SDK pasa por el proxy de afipsdk.com, no habla directo con
+    // AFIP: hace falta un access_token gratuito de https://afipsdk.com
+    access_token: process.env.AFIPSDK_ACCESS_TOKEN!,
+  });
+}
+
+function extractErrorDetail(err: unknown): string {
+  // el interceptor de axios.js de @afipsdk/afip.js reescribe los errores HTTP del
+  // proxy de afipsdk.com como { message, status, data }, no como AxiosError normal
+  // (err.response.data) — el detalle real del rechazo de ARCA viaja en err.data.
+  const responseData = (err as { data?: unknown }).data;
+  return responseData ? JSON.stringify(responseData) : (err as Error).message;
+}
+
+export interface GeneratePdfInput {
+  cuit: string;
+  cert: string;
+  key: string;
+  environment: 'testing' | 'production';
+  salesPoint: number;
+  voucherNumber: number;
+  amount: number;
+  cae: string;
+  caeExpiration: string; // yyyy-mm-dd
+  issueDate: Date;
+  clientCuit?: string;
+}
+
 export interface EmitVoucherInput {
   cuit: string;
   cert: string;
@@ -28,15 +67,7 @@ export interface EmitVoucherResult {
 @Injectable()
 export class AfipClientService {
   async emitInvoice(input: EmitVoucherInput): Promise<EmitVoucherResult> {
-    const afip = new Afip({
-      CUIT: input.cuit,
-      cert: input.cert,
-      key: input.key,
-      production: input.environment === 'production',
-      // esta versión del SDK pasa por el proxy de afipsdk.com, no habla directo con
-      // AFIP: hace falta un access_token gratuito de https://afipsdk.com
-      access_token: process.env.AFIPSDK_ACCESS_TOKEN!,
-    });
+    const afip = buildAfipClient(input);
 
     const docTipo = input.clientCuit ? 80 : 99; // 80 = CUIT, 99 = consumidor final sin identificar
     const docNro = input.clientCuit ?? 0;
@@ -66,12 +97,7 @@ export class AfipClientService {
         MonCotiz: 1,
       });
     } catch (err) {
-      // el interceptor de axios.js de @afipsdk/afip.js reescribe los errores HTTP del
-      // proxy de afipsdk.com como { message, status, data }, no como AxiosError normal
-      // (err.response.data) — el detalle real de por qué falló está en err.data.
-      const responseData = (err as { data?: unknown }).data;
-      const detail = responseData ? JSON.stringify(responseData) : (err as Error).message;
-      throw new Error(detail);
+      throw new Error(extractErrorDetail(err));
     }
 
     return {
@@ -79,5 +105,65 @@ export class AfipClientService {
       caeExpiration: result.CAEFchVto,
       voucherNumber: result.voucherNumber,
     };
+  }
+
+  // Arma el PDF con el diseño oficial de Factura C vía la plantilla hosteada de
+  // afipsdk.com. ponytail: datos del emisor (razón social, domicilio, ingresos
+  // brutos) genéricos porque el modelo de datos no tiene perfil de negocio
+  // todavía — se completa cuando haga falta mostrar los datos reales.
+  async generatePdf(input: GeneratePdfInput): Promise<string> {
+    const afip = buildAfipClient(input);
+    const hasClientCuit = !!input.clientCuit;
+
+    let result;
+    try {
+      result = await afip.ElectronicBilling.createPDF({
+        file_name: `factura-${input.salesPoint}-${input.voucherNumber}.pdf`,
+        template: {
+          name: 'invoice-c',
+          params: {
+            voucher_number: input.voucherNumber,
+            sales_point: input.salesPoint,
+            issue_date: formatDateDDMMYYYY(input.issueDate),
+            cae_due_date: formatDateDDMMYYYY(new Date(input.caeExpiration)),
+            issuer_cuit: Number(input.cuit),
+            cae: Number(input.cae),
+            issuer_business_name: `CUIT ${input.cuit}`,
+            issuer_address: '-',
+            issuer_iva_condition: 'Responsable Monotributo',
+            issuer_gross_income: '-',
+            issuer_activity_start_date: formatDateDDMMYYYY(input.issueDate),
+            receiver_name: hasClientCuit ? `CUIT ${input.clientCuit}` : 'CONSUMIDOR FINAL',
+            receiver_address: '-',
+            receiver_document_type: hasClientCuit ? 80 : 99,
+            receiver_document_number: hasClientCuit ? Number(input.clientCuit) : 0,
+            receiver_iva_condition: hasClientCuit ? 'Responsable Inscripto' : 'Consumidor Final',
+            sale_condition: 'Contado',
+            currency_id: 'ARS',
+            currency_rate: 1,
+            concept: 1,
+            items: [
+              {
+                code: '001',
+                description: 'Servicio',
+                quantity: 1,
+                unit_price: input.amount,
+                subtotal: input.amount,
+              },
+            ],
+            vat_amount: 0,
+            tributes_amount: 0,
+            total_amount: input.amount,
+            net_amount_taxed: 0,
+            net_amount_untaxed: input.amount,
+            exempt_amount: 0,
+          },
+        },
+      });
+    } catch (err) {
+      throw new Error(extractErrorDetail(err));
+    }
+
+    return result.file;
   }
 }

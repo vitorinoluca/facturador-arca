@@ -63,4 +63,29 @@ export class InvoicesService {
   findForUser(userId: string) {
     return this.invoiceRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
   }
+
+  async getPdfUrl(userId: string, invoiceId: string): Promise<string> {
+    const invoice = await this.invoiceRepo.findOneBy({ id: invoiceId, userId });
+    if (!invoice || invoice.status !== InvoiceStatus.ISSUED) {
+      throw new NotFoundException('factura no encontrada o no emitida');
+    }
+    const credential = await this.credentialsService.getDecrypted(userId, invoice.credentialId);
+    if (!credential) {
+      throw new NotFoundException('credencial de ARCA no encontrada');
+    }
+
+    return this.afipClient.generatePdf({
+      cuit: credential.cuit,
+      cert: credential.cert,
+      key: credential.key,
+      environment: credential.environment,
+      salesPoint: invoice.salesPoint,
+      voucherNumber: invoice.voucherNumber!,
+      amount: Number(invoice.amount),
+      cae: invoice.cae!,
+      caeExpiration: invoice.caeExpiration!,
+      issueDate: invoice.createdAt,
+      clientCuit: invoice.clientCuit,
+    });
+  }
 }

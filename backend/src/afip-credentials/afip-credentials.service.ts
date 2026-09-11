@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { decrypt, encrypt } from '../common/crypto.util';
@@ -10,6 +10,14 @@ export class AfipCredentialsService {
   constructor(@InjectRepository(AfipCredential) private readonly repo: Repository<AfipCredential>) {}
 
   async create(userId: string, dto: CreateAfipCredentialDto) {
+    // ponytail: una credencial por usuario alcanza para el MVP (un monotributista =
+    // un CUIT); múltiples credenciales por cuenta se agrega si hace falta manejar
+    // varios CUITs desde el mismo login.
+    const existing = await this.repo.findOneBy({ userId });
+    if (existing) {
+      throw new ConflictException('ya tenés una credencial de ARCA cargada');
+    }
+
     const saved = await this.repo.save(
       this.repo.create({
         userId,

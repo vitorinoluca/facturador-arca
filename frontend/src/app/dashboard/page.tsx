@@ -114,7 +114,7 @@ function Field({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
 const monoInputClass = inputClass + " font-mono text-xs";
 const primaryButtonClass =
   "rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50";
@@ -283,56 +283,62 @@ function CredentialsSection({
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <Field label="CUIT">
-          <input
-            placeholder="20460137749"
-            value={cuit}
-            onChange={(e) => setCuit(e.target.value)}
-            required
-            className={inputClass}
-          />
-        </Field>
+      {credentials.length > 0 ? (
+        <p className="text-xs text-gray-400">
+          Una credencial por cuenta. Borrala en la base si necesitás cargar otra.
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <Field label="CUIT">
+            <input
+              placeholder="20460137749"
+              value={cuit}
+              onChange={(e) => setCuit(e.target.value)}
+              required
+              className={inputClass}
+            />
+          </Field>
 
-        <Field label="Certificado (.crt)" hint="Contenido completo del archivo, incluidas las líneas BEGIN/END">
-          <textarea
-            placeholder="-----BEGIN CERTIFICATE-----"
-            value={cert}
-            onChange={(e) => setCert(e.target.value)}
-            required
-            rows={3}
-            className={monoInputClass}
-          />
-        </Field>
+          <Field label="Certificado (.crt)" hint="Contenido completo del archivo, incluidas las líneas BEGIN/END">
+            <textarea
+              placeholder="-----BEGIN CERTIFICATE-----"
+              value={cert}
+              onChange={(e) => setCert(e.target.value)}
+              required
+              rows={3}
+              className={monoInputClass}
+            />
+          </Field>
 
-        <Field label="Clave privada (.key)" hint="Nunca sale de tu servidor — se guarda encriptada">
-          <textarea
-            placeholder="-----BEGIN PRIVATE KEY-----"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            required
-            rows={3}
-            className={monoInputClass}
-          />
-        </Field>
+          <Field label="Clave privada (.key)" hint="Nunca sale de tu servidor — se guarda encriptada">
+            <textarea
+              placeholder="-----BEGIN PRIVATE KEY-----"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              required
+              rows={3}
+              className={monoInputClass}
+            />
+          </Field>
 
-        <Field label="Ambiente">
-          <select
-            value={environment}
-            onChange={(e) => setEnvironment(e.target.value as "testing" | "production")}
-            className={inputClass}
-          >
-            <option value="testing">Testing (homologación)</option>
-            <option value="production">Producción</option>
-          </select>
-        </Field>
+          <Field label="Ambiente">
+            <select
+              value={environment}
+              onChange={(e) => setEnvironment(e.target.value as "testing" | "production")}
+              className={inputClass}
+            >
+              <option value="testing">Testing (homologación)</option>
+              <option value="production">Producción</option>
+            </select>
+          </Field>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <button type="submit" disabled={loading} className={primaryButtonClass + " w-full"}>
-          {loading ? "Guardando..." : "Agregar credencial"}
-        </button>
-      </form>
+          <button type="submit" disabled={loading} className={primaryButtonClass + " w-full"}>
+            {loading ? "Guardando..." : "Agregar credencial"}
+          </button>
+        </form>
+      )}
     </Card>
   );
 }

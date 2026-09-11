@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -21,5 +21,10 @@ export class InvoicesController {
   @Get()
   findMine(@CurrentUser() user: AuthenticatedUser) {
     return this.invoicesService.findForUser(user.id);
+  }
+
+  @Get(':id/pdf')
+  async getPdf(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return { url: await this.invoicesService.getPdfUrl(user.id, id) };
   }
 }
