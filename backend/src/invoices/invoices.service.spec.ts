@@ -55,8 +55,6 @@ describe('InvoicesService', () => {
 
   const fakeCredential = {
     cuit: '20460137749',
-    cert: 'cert',
-    key: 'key',
     environment: 'testing' as const,
     businessName: 'Luca',
     address: 'Calle 123',
@@ -68,7 +66,7 @@ describe('InvoicesService', () => {
 
   beforeEach(async () => {
     afipClient = { emitInvoice: jest.fn(), generatePdf: jest.fn() } as unknown as jest.Mocked<AfipClientService>;
-    credentialsService = { getDecrypted: jest.fn().mockResolvedValue(fakeCredential) } as unknown as jest.Mocked<AfipCredentialsService>;
+    credentialsService = { get: jest.fn().mockResolvedValue(fakeCredential) } as unknown as jest.Mocked<AfipCredentialsService>;
     dataSource = createFakeDataSource();
 
     const module = await Test.createTestingModule({
@@ -90,7 +88,7 @@ describe('InvoicesService', () => {
   });
 
   it('rechaza si la credencial no existe', async () => {
-    credentialsService.getDecrypted.mockResolvedValue(null);
+    credentialsService.get.mockResolvedValue(null);
     await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(NotFoundException);
   });
 

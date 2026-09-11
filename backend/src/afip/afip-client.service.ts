@@ -14,11 +14,27 @@ export function formatDateStringDDMMYYYY(yyyyMmDd: string): string {
   return `${d}/${m}/${y}`;
 }
 
-function buildAfipClient(creds: { cuit: string; cert: string; key: string; environment: 'testing' | 'production' }) {
+// El certificado que autentica contra ARCA es UNO SOLO, de la app (no de cada
+// usuario): cada usuario delega la facturación electrónica en este CUIT desde el
+// Administrador de Relaciones de Clave Fiscal. El `CUIT` que se le pasa a Afip() acá
+// abajo es el del usuario REPRESENTADO — ARCA valida server-side que este
+// certificado esté autorizado para actuar en su nombre; no hace falta que el
+// certificado le pertenezca.
+function getAppCertificate() {
+  const cert = process.env.AFIP_APP_CERT?.replace(/\\n/g, '\n');
+  const key = process.env.AFIP_APP_KEY?.replace(/\\n/g, '\n');
+  if (!cert || !key) {
+    throw new Error('AFIP_APP_CERT / AFIP_APP_KEY no están configurados en el servidor');
+  }
+  return { cert, key };
+}
+
+function buildAfipClient(creds: { cuit: string; environment: 'testing' | 'production' }) {
+  const { cert, key } = getAppCertificate();
   return new Afip({
     CUIT: creds.cuit,
-    cert: creds.cert,
-    key: creds.key,
+    cert,
+    key,
     production: creds.environment === 'production',
     // esta versión del SDK pasa por el proxy de afipsdk.com, no habla directo con
     // AFIP: hace falta un access_token gratuito de https://afipsdk.com
@@ -36,8 +52,6 @@ function extractErrorDetail(err: unknown): string {
 
 export interface GeneratePdfInput {
   cuit: string;
-  cert: string;
-  key: string;
   environment: 'testing' | 'production';
   salesPoint: number;
   voucherNumber: number;
@@ -54,8 +68,6 @@ export interface GeneratePdfInput {
 
 export interface EmitVoucherInput {
   cuit: string;
-  cert: string;
-  key: string;
   environment: 'testing' | 'production';
   salesPoint: number;
   amount: number;

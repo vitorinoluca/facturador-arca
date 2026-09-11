@@ -29,21 +29,32 @@ export default function LegalPage() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="font-medium text-ink">Cómo se factura en tu nombre</h2>
+          <p className="text-ink-muted">
+            La app opera con <strong>un único certificado de ARCA, propio</strong>. Vos no cargás
+            ningún certificado: delegás la Facturación Electrónica en ese CUIT desde el
+            Administrador de Relaciones de Clave Fiscal de ARCA — dos clicks, revocables en
+            cualquier momento desde ahí mismo, sin depender de esta app. Cada factura sale emitida
+            a tu nombre y con tu CUIT, aunque el certificado que la autoriza técnicamente ante
+            ARCA sea el de la app.
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="font-medium text-ink">Qué datos guarda</h2>
           <p className="text-ink-muted">
-            Tu email (para el login), tu CUIT, y el certificado + clave privada que vos generás y
-            autorizás en ARCA para el servicio de Facturación Electrónica. El certificado y la
-            clave se guardan encriptados (AES-256-GCM) y solo se desencriptan server-side en el
-            momento de llamar a la API de ARCA — nunca se devuelven por ningún endpoint.
+            Tu email (para el login), tu CUIT, y los datos que van impresos en la factura (razón
+            social, domicilio, Ingresos Brutos, inicio de actividades). Ningún certificado ni clave
+            privada tuya — esos no existen de tu lado en este modelo.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="font-medium text-ink">Qué NO pide esta app</h2>
           <p className="text-ink-muted">
-            Nunca te va a pedir tu Clave Fiscal. El certificado que cargás acá es un archivo que
-            vos mismo generás y autorizás — revocable en cualquier momento desde el Administrador
-            de Relaciones de Clave Fiscal de ARCA, sin depender de esta app.
+            Nunca te va a pedir tu Clave Fiscal, ni un certificado, ni una clave privada. Lo único
+            que hacés en ARCA es autorizar (delegar) — un trámite público y revocable, no
+            compartís ningún secreto.
           </p>
         </section>
 
@@ -52,7 +63,10 @@ export default function LegalPage() {
           <p className="text-ink-muted">
             Las facturas que emitas quedan a tu nombre y bajo tu responsabilidad fiscal, igual que
             si las hubieras emitido desde el portal de ARCA. Revisá siempre los datos antes de
-            emitir — un comprobante con CAE ya está registrado ante ARCA.
+            emitir — un comprobante con CAE ya está registrado ante ARCA. Al ser un modelo de
+            certificado único, un problema en la app (un bug, una filtración del certificado)
+            puede afectar a todos los usuarios delegados a la vez — es la misma arquitectura que
+            usan otros facturadores electrónicos de terceros, y conviene tenerlo presente.
           </p>
         </section>
 

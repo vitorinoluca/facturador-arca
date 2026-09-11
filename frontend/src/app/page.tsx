@@ -58,8 +58,8 @@ function Hero({ loggedIn }: { loggedIn: boolean }) {
         Facturá en ARCA sin abrir el portal
       </h1>
       <p className="mx-auto mt-4 max-w-xl text-base text-ink-muted">
-        Cargá tu certificado una vez. Después, emitir una Factura C con CAE real es un formulario
-        de tres campos — no el trámite de siempre.
+        Delegá la facturación electrónica en dos clicks, sin certificados de tu parte. Después,
+        emitir una Factura C con CAE real es un formulario de tres campos.
       </p>
       <div className="mt-8 flex justify-center gap-3">
         <Link
@@ -84,8 +84,8 @@ function HowItWorks() {
   const steps = [
     {
       n: "01",
-      title: "Cargás tu certificado",
-      body: "El que generás vos mismo en ARCA (WSASS o Administración de Certificados). Se guarda encriptado, una sola vez.",
+      title: "Delegás en dos clicks",
+      body: "Desde el Administrador de Relaciones de ARCA, sin generar ningún certificado propio.",
     },
     {
       n: "02",
@@ -120,16 +120,16 @@ function HowItWorks() {
 function Security() {
   const points = [
     {
-      title: "Certificado encriptado en reposo",
-      body: "AES-256-GCM con una clave que solo tiene el servidor. Ni tu certificado ni tu clave privada se guardan en texto plano.",
+      title: "Nunca pedimos tu Clave Fiscal",
+      body: "Ni un certificado, ni una clave privada. Delegás desde ARCA — un trámite público y revocable, sin compartir secretos.",
     },
     {
-      title: "Nunca se expone por HTTP",
-      body: "El certificado y la clave solo se desencriptan server-side, en el momento exacto de llamar a ARCA. La API nunca los devuelve.",
+      title: "Revocable en cualquier momento",
+      body: "La delegación se saca desde el mismo Administrador de Relaciones de ARCA, sin depender de esta app.",
     },
     {
-      title: "No pedimos tu Clave Fiscal",
-      body: "Solo el certificado que vos generás y autorizás en ARCA para el servicio de Facturación Electrónica — nada más.",
+      title: "Sesión en cookies httpOnly",
+      body: "El token de acceso no se guarda en localStorage — un script inyectado (XSS) no puede robarlo.",
     },
   ];
 

@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
   async function handleDeleteCredential() {
     if (!credential) return;
-    if (!confirm("¿Borrar esta credencial? Vas a tener que cargar el certificado de nuevo para volver a facturar.")) {
+    if (!confirm("¿Borrar esta credencial? Vas a tener que cargar tus datos de nuevo para volver a facturar.")) {
       return;
     }
     try {
@@ -148,7 +148,6 @@ function Masthead({
 
 const inputClass =
   "w-full border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none";
-const monoInputClass = inputClass + " font-mono text-xs";
 const primaryButtonClass =
   "border border-accent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -164,10 +163,10 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 /* ---------- credential onboarding (no credential yet) ---------- */
 
+const AFIP_APP_CUIT = process.env.NEXT_PUBLIC_AFIP_APP_CUIT ?? "tu-cuit-configuralo-en-env";
+
 function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [cuit, setCuit] = useState("");
-  const [cert, setCert] = useState("");
-  const [key, setKey] = useState("");
   const [environment, setEnvironment] = useState<"testing" | "production">("testing");
   const [businessName, setBusinessName] = useState("");
   const [address, setAddress] = useState("");
@@ -175,7 +174,6 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [activityStartDate, setActivityStartDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [guideOpen, setGuideOpen] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -186,8 +184,6 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
         method: "POST",
         body: JSON.stringify({
           cuit,
-          cert,
-          key,
           environment,
           businessName,
           address,
@@ -208,22 +204,15 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
       <div className="border-b border-line px-6 py-5">
         <h2 className="font-serif text-lg font-semibold text-ink">Alta de credencial ARCA</h2>
         <p className="mt-1 text-sm text-ink-muted">
-          Necesitás cargar tu certificado antes de poder emitir. Se guarda encriptado y solo se usa
-          para llamar a ARCA en tu nombre.
+          Antes de emitir, delegá la Facturación Electrónica en nuestro CUIT desde ARCA — sin
+          certificados ni claves privadas de tu parte.
         </p>
       </div>
 
-      <button
-        onClick={() => setGuideOpen((v) => !v)}
-        className="flex w-full items-center justify-between border-b border-line px-6 py-3 text-left text-sm text-accent"
-      >
-        <span>¿De dónde saco el CUIT, el certificado y el token?</span>
-        <span>{guideOpen ? "ocultar" : "ver guía"}</span>
-      </button>
-      {guideOpen && <Guide />}
+      <Guide />
 
       <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
-        <Field label="CUIT">
+        <Field label="CUIT" hint="El que usaste para delegar en ARCA">
           <input
             placeholder="20460137749"
             value={cuit}
@@ -273,29 +262,7 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
           </Field>
         </div>
 
-        <Field label="Certificado (.crt)" hint="Contenido completo del archivo, incluidas las líneas BEGIN/END">
-          <textarea
-            placeholder="-----BEGIN CERTIFICATE-----"
-            value={cert}
-            onChange={(e) => setCert(e.target.value)}
-            required
-            rows={4}
-            className={monoInputClass}
-          />
-        </Field>
-
-        <Field label="Clave privada (.key)" hint="Nunca sale de tu servidor — se guarda encriptada">
-          <textarea
-            placeholder="-----BEGIN PRIVATE KEY-----"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            required
-            rows={4}
-            className={monoInputClass}
-          />
-        </Field>
-
-        <Field label="Ambiente">
+        <Field label="Ambiente" hint="Usá testing hasta confirmar que la delegación quedó bien hecha">
           <select
             value={environment}
             onChange={(e) => setEnvironment(e.target.value as "testing" | "production")}
@@ -320,59 +287,50 @@ function Guide() {
   return (
     <div className="space-y-4 border-b border-line bg-paper px-6 py-5 text-sm text-ink">
       <div>
-        <p className="font-medium">1. CUIT</p>
-        <p className="text-ink-muted">
-          El tuyo, sin guiones. Lo encontrás en tu constancia de inscripción de ARCA o en cualquier
-          factura que hayas emitido.
-        </p>
-      </div>
-      <div>
-        <p className="font-medium">2. Certificado y clave privada</p>
+        <p className="font-medium">1. Delegar la facturación electrónica</p>
         <ol className="ml-4 list-decimal space-y-1 text-ink-muted">
           <li>
-            Generá un par clave/CSR con OpenSSL:{" "}
-            <code className="bg-surface px-1 py-0.5 font-mono text-xs">
-              openssl genrsa -out clave.key 2048
-            </code>{" "}
-            y después{" "}
-            <code className="bg-surface px-1 py-0.5 font-mono text-xs">
-              openssl req -new -key clave.key -subj &quot;/CN=alias/serialNumber=CUIT tuCUIT&quot; -out
-              pedido.csr
-            </code>
-            .
-          </li>
-          <li>
             Entrá a{" "}
-            <a href="https://auth.afip.gob.ar/contribuyente_/login.xhtml" target="_blank" className="text-accent underline">
+            <a
+              href="https://auth.afip.gob.ar/contribuyente_/login.xhtml"
+              target="_blank"
+              className="text-accent underline"
+            >
               ARCA con tu Clave Fiscal
             </a>{" "}
-            → buscá <strong>WSASS - Autogestión Certificados Homologación</strong> (testing) o{" "}
-            <strong>Administración de Certificados Digitales</strong> (producción).
+            → <strong>Administrador de Relaciones de Clave Fiscal</strong> → <strong>Nueva Relación</strong>.
           </li>
-          <li>Pegá el contenido del `.csr` ahí y te devuelve el certificado.</li>
           <li>
-            Dentro del mismo servicio, autorizá el certificado al servicio{" "}
-            <code className="bg-surface px-1 py-0.5 font-mono text-xs">wsfe</code>.
+            Elegí: Organismo <strong>AFIP/ARCA</strong>, Servicio <strong>Web Services</strong>,
+            Aplicación <strong>Facturación Electrónica</strong>.
+          </li>
+          <li>
+            En <strong>Representante</strong> buscá el CUIT{" "}
+            <code className="bg-surface px-1 py-0.5 font-mono text-xs">{AFIP_APP_CUIT}</code> y confirmá
+            dos veces.
+          </li>
+          <li>Si aparece un aviso en rojo sobre no tener un facturador propio registrado, ignoralo.</li>
+        </ol>
+      </div>
+      <div>
+        <p className="font-medium">2. Crear tu punto de venta</p>
+        <ol className="ml-4 list-decimal space-y-1 text-ink-muted">
+          <li>
+            En ARCA, entrá a <strong>Administración de puntos de venta y domicilios</strong> →{" "}
+            <strong>Agregar</strong>.
+          </li>
+          <li>Elegí un número de punto de venta que no estés usando.</li>
+          <li>
+            Sistema: <strong>Facturación Electrónica - Monotributo - Webservice</strong>. Domicilio: tu
+            domicilio fiscal.
           </li>
         </ol>
       </div>
       <div>
-        <p className="font-medium">3. Token de AfipSDK</p>
+        <p className="font-medium">3. Cargá tus datos acá abajo</p>
         <p className="text-ink-muted">
-          Registrate gratis en{" "}
-          <a href="https://afipsdk.com" target="_blank" className="text-accent underline">
-            afipsdk.com
-          </a>{" "}
-          y configurá el <code className="bg-surface px-1 py-0.5 font-mono text-xs">access_token</code>{" "}
-          como <code className="bg-surface px-1 py-0.5 font-mono text-xs">AFIPSDK_ACCESS_TOKEN</code>{" "}
-          en el servidor — no en esta pantalla.
-        </p>
-      </div>
-      <div>
-        <p className="font-medium">4. Testing vs. producción</p>
-        <p className="text-ink-muted">
-          Usá <strong>testing</strong> para probar, no genera comprobantes reales. Cambiá a{" "}
-          <strong>producción</strong> solo cuando quieras facturar de verdad.
+          Con la delegación hecha, completá el formulario — el número de punto de venta que creaste va
+          en la pantalla de facturas, no acá.
         </p>
       </div>
     </div>
@@ -387,7 +345,7 @@ function HelpStrip() {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-4 py-2 text-left text-xs text-ink-muted hover:text-ink"
       >
-        <span>Guía: certificado, CUIT y token</span>
+        <span>Guía: delegar en otro ambiente (testing/producción)</span>
         <span>{open ? "ocultar" : "ver"}</span>
       </button>
       {open && <Guide />}

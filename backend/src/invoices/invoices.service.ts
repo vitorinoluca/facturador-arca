@@ -21,7 +21,7 @@ export class InvoicesService {
       throw new BadRequestException('el header Idempotency-Key es obligatorio');
     }
 
-    const credential = await this.credentialsService.getDecrypted(userId, dto.credentialId);
+    const credential = await this.credentialsService.get(userId, dto.credentialId);
     if (!credential) {
       throw new NotFoundException('credencial de ARCA no encontrada');
     }
@@ -51,8 +51,6 @@ export class InvoicesService {
       try {
         const result = await this.afipClient.emitInvoice({
           cuit: credential.cuit,
-          cert: credential.cert,
-          key: credential.key,
           environment: credential.environment,
           salesPoint: dto.salesPoint,
           amount: dto.amount,
@@ -118,15 +116,13 @@ export class InvoicesService {
     if (!invoice || invoice.status !== InvoiceStatus.ISSUED) {
       throw new NotFoundException('factura no encontrada o no emitida');
     }
-    const credential = await this.credentialsService.getDecrypted(userId, invoice.credentialId);
+    const credential = await this.credentialsService.get(userId, invoice.credentialId);
     if (!credential) {
       throw new NotFoundException('credencial de ARCA no encontrada');
     }
 
     const url = await this.afipClient.generatePdf({
       cuit: credential.cuit,
-      cert: credential.cert,
-      key: credential.key,
       environment: credential.environment,
       salesPoint: invoice.salesPoint,
       voucherNumber: invoice.voucherNumber!,

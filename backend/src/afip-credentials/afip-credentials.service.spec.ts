@@ -8,8 +8,6 @@ import { AfipCredential } from './entities/afip-credential.entity';
 
 const dto: CreateAfipCredentialDto = {
   cuit: '20460137749',
-  cert: '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----',
-  key: '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----',
   businessName: 'Luca Vitorino',
   address: 'Calle 123, La Plata',
   activityStartDate: '2020-01-01',
@@ -20,8 +18,6 @@ describe('AfipCredentialsService', () => {
   let repo: jest.Mocked<Repository<AfipCredential>>;
 
   beforeEach(async () => {
-    process.env.CREDENTIALS_ENCRYPTION_KEY = 'a'.repeat(64);
-
     const module = await Test.createTestingModule({
       providers: [
         AfipCredentialsService,
@@ -48,17 +44,6 @@ describe('AfipCredentialsService', () => {
       await expect(service.create('user-1', dto)).rejects.toThrow(ConflictException);
     });
 
-    it('nunca guarda el cert/key en texto plano', async () => {
-      repo.findOneBy.mockResolvedValue(null);
-      repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
-
-      await service.create('user-1', dto);
-
-      const saved = repo.save.mock.calls[0][0] as AfipCredential;
-      expect(saved.certEncrypted).not.toContain('BEGIN CERTIFICATE');
-      expect(saved.keyEncrypted).not.toContain('BEGIN PRIVATE KEY');
-    });
-
     it('usa "Exento" como default de Ingresos Brutos si no se manda', async () => {
       repo.findOneBy.mockResolvedValue(null);
       repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
@@ -67,6 +52,16 @@ describe('AfipCredentialsService', () => {
 
       const saved = repo.save.mock.calls[0][0] as AfipCredential;
       expect(saved.grossIncome).toBe('Exento');
+    });
+
+    it('usa "testing" como ambiente default', async () => {
+      repo.findOneBy.mockResolvedValue(null);
+      repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
+
+      await service.create('user-1', dto);
+
+      const saved = repo.save.mock.calls[0][0] as AfipCredential;
+      expect(saved.environment).toBe('testing');
     });
   });
 
@@ -83,23 +78,16 @@ describe('AfipCredentialsService', () => {
     });
   });
 
-  describe('getDecrypted', () => {
+  describe('get', () => {
     it('devuelve null si no existe', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      expect(await service.getDecrypted('user-1', 'cred-1')).toBeNull();
+      expect(await service.get('user-1', 'cred-1')).toBeNull();
     });
 
-    it('desencripta cert y key correctamente', async () => {
+    it('solo devuelve credenciales del usuario dueño', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
-      const created = await service.create('user-1', dto);
-
-      const savedRow = repo.save.mock.calls[0][0] as AfipCredential;
-      repo.findOneBy.mockResolvedValue({ ...savedRow, id: created.id } as AfipCredential);
-
-      const decrypted = await service.getDecrypted('user-1', created.id);
-      expect(decrypted?.cert).toBe(dto.cert);
-      expect(decrypted?.key).toBe(dto.key);
+      await service.get('user-1', 'cred-de-otro');
+      expect(repo.findOneBy).toHaveBeenCalledWith({ id: 'cred-de-otro', userId: 'user-1' });
     });
   });
 });

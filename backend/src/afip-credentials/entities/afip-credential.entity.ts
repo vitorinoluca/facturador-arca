@@ -1,5 +1,9 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+// El certificado que habla con ARCA es UNO SOLO, propio de la app (ver
+// afip/afip-client.service.ts) — este registro es la "ficha" de un usuario que
+// delegó la facturación electrónica en el CUIT de la app desde el Administrador de
+// Relaciones de Clave Fiscal. No guarda ningún secreto de ARCA del usuario.
 @Entity('afip_credentials')
 export class AfipCredential {
   @PrimaryGeneratedColumn('uuid')
@@ -11,17 +15,10 @@ export class AfipCredential {
   @Column()
   cuit: string;
 
-  // certificado y clave privada guardados encriptados (ver common/crypto.util.ts)
-  @Column({ type: 'text' })
-  certEncrypted: string;
-
-  @Column({ type: 'text' })
-  keyEncrypted: string;
-
   @Column({ default: 'testing' })
   environment: 'testing' | 'production';
 
-  // datos reales del emisor para el PDF de la factura (antes iban hardcodeados)
+  // datos reales del emisor para el PDF de la factura
   @Column()
   businessName: string;
 

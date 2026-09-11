@@ -2,20 +2,22 @@
 
 [![CI](https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml/badge.svg)](https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml)
 
-Facturación electrónica (ARCA/WSFEv1) para monotributistas. Cada usuario carga su propio
-certificado ARCA y emite facturas C reales desde una UI simple, sin entrar al portal de ARCA.
+Facturación electrónica (ARCA/WSFEv1) para monotributistas. Los usuarios delegan la
+facturación electrónica en el CUIT de la app desde ARCA (dos clicks, sin certificados de su
+parte) y emiten facturas C reales desde una UI simple.
 
 ## Stack
 
-- **Backend**: NestJS, TypeScript, PostgreSQL (TypeORM), JWT, `@afipsdk/afip.js`.
+- **Backend**: NestJS, TypeScript, PostgreSQL (TypeORM), JWT (access + refresh con rotación,
+  en cookies httpOnly), `@afipsdk/afip.js`.
 - **Frontend**: Next.js (App Router), Tailwind.
 
 ## Cómo funciona
 
-Cada usuario tiene que generar su propio certificado digital en ARCA (Administrador de
-Relaciones de Clave Fiscal → WSFEv1) y cargarlo acá. El certificado y la clave privada se
-guardan encriptados (AES-256-GCM) y solo se usan server-side para llamar a la API de ARCA en
-nombre de ese usuario — nunca se exponen por HTTP.
+La app tiene **un único certificado de ARCA**, propio (configurado por env vars). Cada usuario
+delega la Facturación Electrónica en el CUIT de ese certificado desde el Administrador de
+Relaciones de Clave Fiscal de ARCA — sin generar ni compartir ningún certificado propio. Ver la
+guía paso a paso dentro de la app (pantalla de alta de credencial).
 
 ## Setup
 
@@ -23,12 +25,12 @@ nombre de ese usuario — nunca se exponen por HTTP.
 docker compose up -d          # Postgres
 
 cd backend
-cp .env.example .env          # completar JWT_SECRET, CREDENTIALS_ENCRYPTION_KEY, AFIPSDK_ACCESS_TOKEN
+cp .env.example .env          # completar JWT_SECRET, AFIPSDK_ACCESS_TOKEN, AFIP_APP_CERT/KEY
 npm install
 npm run start:dev             # http://localhost:3001, Swagger en /api
 
 cd ../frontend
-cp .env.local.example .env.local
+cp .env.local.example .env.local  # completar NEXT_PUBLIC_AFIP_APP_CUIT
 npm install
 npm run dev                   # http://localhost:3000
 ```
@@ -36,11 +38,20 @@ npm run dev                   # http://localhost:3000
 `AFIPSDK_ACCESS_TOKEN` se obtiene gratis registrándose en https://afipsdk.com — la librería
 `@afipsdk/afip.js` pasa por su proxy en vez de hablar directo con los webservices de ARCA.
 
+`AFIP_APP_CERT`/`AFIP_APP_KEY` son el certificado propio de la app (generado en ARCA, una vez),
+con los saltos de línea como `\n` literal en una sola línea de env var.
+
+## Tests
+
+```bash
+cd backend && npm test
+```
+
 ## Alcance actual (MVP)
 
-- Registro/login con JWT.
-- Carga de certificado ARCA por usuario (multi-tenant, cada uno factura con su propio CUIT).
-- Emisión de Factura C (consumidor final o con CUIT) vía WSFEv1.
-- Historial de facturas emitidas.
+- Registro/login con refresh token rotativo, en cookies httpOnly.
+- Delegación de Facturación Electrónica en el CUIT de la app (sin certificados por usuario).
+- Emisión de Factura C (consumidor final o con CUIT) vía WSFEv1, con idempotencia.
+- Historial de facturas emitidas, PDF descargable.
 
 Fuera de alcance por ahora: notas de crédito, Factura A/B, facturación recurrente.
