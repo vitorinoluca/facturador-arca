@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { AfipCredential } from './afip-credentials/entities/afip-credential.entity';
+import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { User } from './auth/entities/user.entity';
 import { IdempotencyKey } from './invoices/entities/idempotency-key.entity';
 import { Invoice } from './invoices/entities/invoice.entity';
@@ -10,6 +11,6 @@ import { Invoice } from './invoices/entities/invoice.entity';
 export default new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: [User, AfipCredential, Invoice, IdempotencyKey],
+  entities: [User, RefreshToken, AfipCredential, Invoice, IdempotencyKey],
   migrations: ['src/migrations/*.ts'],
 });

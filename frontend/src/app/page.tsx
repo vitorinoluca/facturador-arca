@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { isLoggedIn } from "@/lib/api";
+import { getSession } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 
 export default function LandingPage() {
   const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    setLoggedIn(isLoggedIn());
+    void getSession().then((session) => setLoggedIn(!!session));
   }, []);
 
   return (

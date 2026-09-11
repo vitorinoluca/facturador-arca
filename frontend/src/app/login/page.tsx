@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, setToken } from "@/lib/api";
+import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 
 export default function LoginPage() {
@@ -18,11 +18,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { accessToken } = await api<{ accessToken: string }>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-      setToken(accessToken);
+      await api("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
       router.push("/dashboard");
     } catch (err) {
       setError((err as Error).message);

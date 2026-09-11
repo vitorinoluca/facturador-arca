@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AfipCredentialsModule } from './afip-credentials/afip-credentials.module';
 import { AfipCredential } from './afip-credentials/entities/afip-credential.entity';
 import { AuthModule } from './auth/auth.module';
+import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { User } from './auth/entities/user.entity';
 import { IdempotencyKey } from './invoices/entities/idempotency-key.entity';
 import { Invoice } from './invoices/entities/invoice.entity';
@@ -20,7 +21,7 @@ import { InvoicesModule } from './invoices/invoices.module';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, AfipCredential, Invoice, IdempotencyKey],
+      entities: [User, RefreshToken, AfipCredential, Invoice, IdempotencyKey],
       migrations: [__dirname + '/migrations/*.{js,ts}'],
       migrationsRun: true, // corre las migraciones pendientes solas al arrancar
       synchronize: false,

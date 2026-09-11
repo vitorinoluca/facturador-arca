@@ -2,8 +2,8 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
-function contextWithHeader(authorization?: string): ExecutionContext {
-  const request: Record<string, unknown> = { headers: { authorization } };
+function contextWithCookie(accessToken?: string): ExecutionContext {
+  const request: Record<string, unknown> = { cookies: accessToken ? { access_token: accessToken } : {} };
   return {
     switchToHttp: () => ({ getRequest: () => request }),
   } as unknown as ExecutionContext;
@@ -18,22 +18,18 @@ describe('JwtAuthGuard', () => {
     guard = new JwtAuthGuard(jwtService);
   });
 
-  it('rechaza sin header de autorización', async () => {
-    await expect(guard.canActivate(contextWithHeader(undefined))).rejects.toThrow(UnauthorizedException);
-  });
-
-  it('rechaza un header que no es Bearer', async () => {
-    await expect(guard.canActivate(contextWithHeader('Basic algo'))).rejects.toThrow(UnauthorizedException);
+  it('rechaza sin cookie de access_token', async () => {
+    await expect(guard.canActivate(contextWithCookie())).rejects.toThrow(UnauthorizedException);
   });
 
   it('rechaza un token inválido o expirado', async () => {
     jwtService.verifyAsync.mockRejectedValue(new Error('expired'));
-    await expect(guard.canActivate(contextWithHeader('Bearer feo'))).rejects.toThrow(UnauthorizedException);
+    await expect(guard.canActivate(contextWithCookie('feo'))).rejects.toThrow(UnauthorizedException);
   });
 
   it('acepta un token válido y adjunta el usuario al request', async () => {
     jwtService.verifyAsync.mockResolvedValue({ sub: 'user-1', email: 'a@a.com' });
-    const context = contextWithHeader('Bearer valido');
+    const context = contextWithCookie('valido');
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 

@@ -1,20 +1,23 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
+// El access token vive en una cookie httpOnly — el navegador la manda solo si el
+// fetch tiene credentials:"include", y JS no puede leerla ni guardarla a mano
+// (esa es la idea: un XSS ya no puede robar el token con localStorage.getItem).
+async function tryRefresh(): Promise<boolean> {
+  const res = await fetch(`${API_URL}/auth/refresh`, { method: "POST", credentials: "include" });
+  return res.ok;
 }
 
-export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
+export async function api<T>(path: string, options: RequestInit = {}, isRetry = false): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...options.headers },
   });
+
+  if (res.status === 401 && !isRetry && path !== "/auth/refresh" && (await tryRefresh())) {
+    return api<T>(path, options, true);
+  }
 
   const body = await res.json().catch(() => null);
   if (!res.ok) {
@@ -24,25 +27,26 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 }
 
 // para endpoints que devuelven binario (PDF) en vez de JSON
-export async function apiBlob(path: string): Promise<Blob> {
-  const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+export async function apiBlob(path: string, isRetry = false): Promise<Blob> {
+  const res = await fetch(`${API_URL}${path}`, { credentials: "include" });
+
+  if (res.status === 401 && !isRetry && (await tryRefresh())) {
+    return apiBlob(path, true);
+  }
   if (!res.ok) {
     throw new Error(`error ${res.status}`);
   }
   return res.blob();
 }
 
-export function setToken(token: string) {
-  localStorage.setItem("token", token);
+export async function getSession(): Promise<{ id: string; email: string } | null> {
+  try {
+    return await api<{ id: string; email: string }>("/auth/me");
+  } catch {
+    return null;
+  }
 }
 
-export function clearToken() {
-  localStorage.removeItem("token");
-}
-
-export function isLoggedIn(): boolean {
-  return !!getToken();
+export async function logout(): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
 }

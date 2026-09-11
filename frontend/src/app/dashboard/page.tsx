@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, apiBlob, clearToken, isLoggedIn } from "@/lib/api";
+import { api, apiBlob, getSession, logout } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 
 type Credential = { id: string; cuit: string; environment: "testing" | "production"; businessName: string };
@@ -26,11 +26,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.replace("/login");
-      return;
-    }
-    void loadAll();
+    void (async () => {
+      const session = await getSession();
+      if (!session) {
+        router.replace("/login");
+        return;
+      }
+      void loadAll();
+    })();
   }, [router]);
 
   async function loadAll() {
@@ -46,8 +49,8 @@ export default function DashboardPage() {
     }
   }
 
-  function handleLogout() {
-    clearToken();
+  async function handleLogout() {
+    await logout();
     router.push("/login");
   }
 
