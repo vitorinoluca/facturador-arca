@@ -5,6 +5,7 @@ import { AfipCredentialsModule } from './afip-credentials/afip-credentials.modul
 import { AfipCredential } from './afip-credentials/entities/afip-credential.entity';
 import { AuthModule } from './auth/auth.module';
 import { User } from './auth/entities/user.entity';
+import { IdempotencyKey } from './invoices/entities/idempotency-key.entity';
 import { Invoice } from './invoices/entities/invoice.entity';
 import { InvoicesModule } from './invoices/invoices.module';
 
@@ -14,7 +15,7 @@ import { InvoicesModule } from './invoices/invoices.module';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, AfipCredential, Invoice],
+      entities: [User, AfipCredential, Invoice, IdempotencyKey],
       synchronize: true, // dev only, hasta que existan migraciones
     }),
     AuthModule,

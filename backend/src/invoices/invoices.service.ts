@@ -1,62 +1,108 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
 import { AfipClientService } from '../afip/afip-client.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { IdempotencyKey } from './entities/idempotency-key.entity';
 import { Invoice, InvoiceStatus } from './entities/invoice.entity';
 
 @Injectable()
 export class InvoicesService {
   constructor(
     @InjectRepository(Invoice) private readonly invoiceRepo: Repository<Invoice>,
+    @InjectDataSource() private readonly dataSource: DataSource,
     private readonly credentialsService: AfipCredentialsService,
     private readonly afipClient: AfipClientService,
   ) {}
 
-  async create(userId: string, dto: CreateInvoiceDto) {
+  async create(userId: string, dto: CreateInvoiceDto, idempotencyKey: string) {
+    if (!idempotencyKey) {
+      throw new BadRequestException('el header Idempotency-Key es obligatorio');
+    }
+
     const credential = await this.credentialsService.getDecrypted(userId, dto.credentialId);
     if (!credential) {
       throw new NotFoundException('credencial de ARCA no encontrada');
     }
 
-    try {
-      const result = await this.afipClient.emitInvoice({
-        cuit: credential.cuit,
-        cert: credential.cert,
-        key: credential.key,
-        environment: credential.environment,
-        salesPoint: dto.salesPoint,
-        amount: dto.amount,
-        clientCuit: dto.clientCuit,
-      });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-      return this.invoiceRepo.save(
-        this.invoiceRepo.create({
-          userId,
-          credentialId: dto.credentialId,
-          salesPoint: dto.salesPoint,
-          amount: dto.amount.toString(),
-          clientCuit: dto.clientCuit,
-          cae: result.cae,
-          caeExpiration: result.caeExpiration,
-          voucherNumber: result.voucherNumber,
-          status: InvoiceStatus.ISSUED,
-        }),
+    try {
+      // INSERT ... ON CONFLICT DO NOTHING: si esta key ya se procesó (o se está
+      // procesando en otro request concurrente), Postgres bloquea el insert hasta que
+      // esa otra transacción termine, y acá abajo devolvemos su resultado guardado en
+      // vez de volver a llamar a ARCA — así un doble click nunca genera dos facturas.
+      const idempotencyRepo = queryRunner.manager.getRepository(IdempotencyKey);
+      const inserted: Array<{ key: string }> = await queryRunner.query(
+        `INSERT INTO idempotency_keys(key) VALUES ($1) ON CONFLICT (key) DO NOTHING RETURNING key`,
+        [idempotencyKey],
       );
+
+      if (inserted.length === 0) {
+        const existing = await idempotencyRepo.findOneBy({ key: idempotencyKey });
+        await queryRunner.commitTransaction();
+        return existing!.responseBody;
+      }
+
+      let savedInvoice: Invoice;
+      try {
+        const result = await this.afipClient.emitInvoice({
+          cuit: credential.cuit,
+          cert: credential.cert,
+          key: credential.key,
+          environment: credential.environment,
+          salesPoint: dto.salesPoint,
+          amount: dto.amount,
+          clientCuit: dto.clientCuit,
+        });
+
+        savedInvoice = await queryRunner.manager.save(
+          queryRunner.manager.create(Invoice, {
+            userId,
+            credentialId: dto.credentialId,
+            salesPoint: dto.salesPoint,
+            amount: dto.amount.toString(),
+            clientCuit: dto.clientCuit,
+            cae: result.cae,
+            caeExpiration: result.caeExpiration,
+            voucherNumber: result.voucherNumber,
+            status: InvoiceStatus.ISSUED,
+          }),
+        );
+      } catch (err) {
+        savedInvoice = await queryRunner.manager.save(
+          queryRunner.manager.create(Invoice, {
+            userId,
+            credentialId: dto.credentialId,
+            salesPoint: dto.salesPoint,
+            amount: dto.amount.toString(),
+            clientCuit: dto.clientCuit,
+            status: InvoiceStatus.FAILED,
+            errorMessage: (err as Error).message,
+          }),
+        );
+        await idempotencyRepo.update({ key: idempotencyKey }, { responseBody: savedInvoice });
+        await queryRunner.commitTransaction();
+        throw new BadRequestException({
+          message: 'ARCA rechazó el comprobante',
+          invoiceId: savedInvoice.id,
+          cause: (err as Error).message,
+        });
+      }
+
+      await idempotencyRepo.update({ key: idempotencyKey }, { responseBody: savedInvoice });
+      await queryRunner.commitTransaction();
+      return savedInvoice;
     } catch (err) {
-      const failed = await this.invoiceRepo.save(
-        this.invoiceRepo.create({
-          userId,
-          credentialId: dto.credentialId,
-          salesPoint: dto.salesPoint,
-          amount: dto.amount.toString(),
-          clientCuit: dto.clientCuit,
-          status: InvoiceStatus.FAILED,
-          errorMessage: (err as Error).message,
-        }),
-      );
-      throw new BadRequestException({ message: 'ARCA rechazó el comprobante', invoiceId: failed.id, cause: (err as Error).message });
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
   }
 

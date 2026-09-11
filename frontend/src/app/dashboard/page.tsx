@@ -329,6 +329,11 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
   const [clientCuit, setClientCuit] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // se mantiene la misma key mientras no se emita con éxito: si el usuario reintenta
+  // (por un timeout, o un doble click que el disabled no llegó a bloquear) el backend
+  // devuelve el resultado ya guardado en vez de facturar dos veces. Se renueva después
+  // de cada emisión exitosa para que la próxima factura no reuse la respuesta vieja.
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -337,6 +342,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
     try {
       await api("/invoices", {
         method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey },
         body: JSON.stringify({
           credentialId: credential.id,
           salesPoint: Number(salesPoint),
@@ -346,6 +352,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
       });
       setAmount("");
       setClientCuit("");
+      setIdempotencyKey(crypto.randomUUID());
       onCreated();
     } catch (err) {
       setError((err as Error).message);

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -14,8 +14,12 @@ export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateInvoiceDto) {
-    return this.invoicesService.create(user.id, dto);
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateInvoiceDto,
+    @Headers('idempotency-key') idempotencyKey: string,
+  ) {
+    return this.invoicesService.create(user.id, dto, idempotencyKey);
   }
 
   @Get()
