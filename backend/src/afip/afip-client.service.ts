@@ -262,4 +262,20 @@ export class AfipClientService {
 
     return { businessName, address, activityStartDate };
   }
+
+  // Verifica si el CUIT ya delegó Facturación Electrónica en el certificado de la
+  // app: FEParamGetPtosVenta falla con error de autorización si no hay delegación.
+  // ponytail: no valida si además creó un punto de venta — ese dato no se puede
+  // confirmar por acá (FEParamGetPtosVenta devuelve "sin resultados" incluso con
+  // puntos de venta ya usados en facturas reales, no es una señal confiable).
+  async checkDelegation(cuit: string, environment: 'testing' | 'production'): Promise<{ delegated: boolean; detail?: string }> {
+    const afip = buildAfipClient({ cuit, environment });
+    try {
+      await afip.ElectronicBilling.getSalesPoints();
+      return { delegated: true };
+    } catch (err) {
+      if ((err as { code?: number }).code === 602) return { delegated: true };
+      return { delegated: false, detail: extractErrorDetail(err) };
+    }
+  }
 }

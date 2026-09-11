@@ -41,6 +41,19 @@ export class AfipCredentialsController {
     return result;
   }
 
+  // chequea si el CUIT ya delegó Facturación Electrónica en el CUIT de la app antes
+  // de dejar avanzar al resto del formulario de alta
+  @Get('delegation/:cuit')
+  async checkDelegation(
+    @Param('cuit') cuit: string,
+    @Query('environment') environment: 'testing' | 'production' = 'testing',
+  ) {
+    if (!/^\d{11}$/.test(cuit)) {
+      throw new BadRequestException('cuit debe tener 11 dígitos');
+    }
+    return this.afipClient.checkDelegation(cuit, environment);
+  }
+
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAfipCredentialDto) {
     return this.service.create(user.id, dto);

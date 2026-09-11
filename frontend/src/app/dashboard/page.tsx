@@ -179,6 +179,33 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
+  const [delegationOk, setDelegationOk] = useState(false);
+  const [checkingDelegation, setCheckingDelegation] = useState(false);
+
+  async function handleCheckDelegation() {
+    if (!/^\d{11}$/.test(cuit)) {
+      setError("Ingresá un CUIT válido (11 dígitos)");
+      return;
+    }
+    setError(null);
+    setCheckingDelegation(true);
+    try {
+      const data = await api<{ delegated: boolean; detail?: string }>(
+        `/afip-credentials/delegation/${cuit}?environment=${environment}`,
+      );
+      if (!data.delegated) {
+        setError(
+          "Todavía no delegaste la Facturación Electrónica en ARCA para este CUIT y ambiente — completá el paso 1 de la guía.",
+        );
+        return;
+      }
+      setDelegationOk(true);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setCheckingDelegation(false);
+    }
+  }
 
   async function handleLookup() {
     if (!/^\d{11}$/.test(cuit)) {
@@ -239,69 +266,27 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
 
       <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
         <Field label="CUIT" hint="El que usaste para delegar en ARCA">
-          <div className="flex gap-2">
-            <input
-              placeholder="20460137749"
-              value={cuit}
-              onChange={(e) => setCuit(e.target.value)}
-              required
-              className={inputClass}
-            />
-            <button
-              type="button"
-              onClick={handleLookup}
-              disabled={lookingUp}
-              className="shrink-0 border border-line px-3 text-xs text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-50"
-            >
-              {lookingUp ? "Buscando..." : "Buscar datos"}
-            </button>
-          </div>
-        </Field>
-
-        <Field label="Razón social" hint="Va impresa en el PDF de la factura">
           <input
-            placeholder="Tu nombre y apellido, o el nombre de tu actividad"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder="20460137749"
+            value={cuit}
+            onChange={(e) => {
+              setCuit(e.target.value);
+              setDelegationOk(false);
+            }}
             required
+            disabled={delegationOk}
             className={inputClass}
           />
         </Field>
-
-        <Field label="Domicilio comercial">
-          <input
-            placeholder="Calle 123, La Plata, Buenos Aires"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-            className={inputClass}
-          />
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Ingresos Brutos" hint="Tu N° de IIBB, o dejalo así si estás exento">
-            <input
-              placeholder="Exento"
-              value={grossIncome}
-              onChange={(e) => setGrossIncome(e.target.value)}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Inicio de actividades">
-            <input
-              type="date"
-              value={activityStartDate}
-              onChange={(e) => setActivityStartDate(e.target.value)}
-              required
-              className={inputClass}
-            />
-          </Field>
-        </div>
 
         <Field label="Ambiente" hint="Usá testing hasta confirmar que la delegación quedó bien hecha">
           <select
             value={environment}
-            onChange={(e) => setEnvironment(e.target.value as "testing" | "production")}
+            onChange={(e) => {
+              setEnvironment(e.target.value as "testing" | "production");
+              setDelegationOk(false);
+            }}
+            disabled={delegationOk}
             className={inputClass}
           >
             <option value="testing">Testing (homologación)</option>
@@ -311,9 +296,78 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
 
         {error && <p className="text-sm text-status-failed">{error}</p>}
 
-        <button type="submit" disabled={loading} className={primaryButtonClass}>
-          {loading ? "Guardando..." : "Guardar credencial"}
-        </button>
+        {!delegationOk && (
+          <button
+            type="button"
+            onClick={handleCheckDelegation}
+            disabled={checkingDelegation}
+            className={primaryButtonClass}
+          >
+            {checkingDelegation ? "Verificando..." : "Verificar delegación"}
+          </button>
+        )}
+
+        {delegationOk && (
+          <>
+            <p className="text-sm text-status-issued">Delegación confirmada en ARCA.</p>
+
+            <Field label="Razón social" hint="Va impresa en el PDF de la factura">
+              <div className="flex gap-2">
+                <input
+                  placeholder="Tu nombre y apellido, o el nombre de tu actividad"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={handleLookup}
+                  disabled={lookingUp}
+                  className="shrink-0 border border-line px-3 text-xs text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-50"
+                >
+                  {lookingUp ? "Buscando..." : "Buscar datos"}
+                </button>
+              </div>
+            </Field>
+
+            <Field label="Domicilio comercial">
+              <input
+                placeholder="Calle 123, La Plata, Buenos Aires"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Ingresos Brutos" hint="Tu N° de IIBB, o dejalo así si estás exento">
+                <input
+                  placeholder="Exento"
+                  value={grossIncome}
+                  onChange={(e) => setGrossIncome(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Inicio de actividades">
+                <input
+                  type="date"
+                  value={activityStartDate}
+                  onChange={(e) => setActivityStartDate(e.target.value)}
+                  required
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+          </>
+        )}
+
+        {delegationOk && (
+          <button type="submit" disabled={loading} className={primaryButtonClass}>
+            {loading ? "Guardando..." : "Guardar credencial"}
+          </button>
+        )}
       </form>
     </div>
   );
