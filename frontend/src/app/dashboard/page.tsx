@@ -360,6 +360,10 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
   const [amount, setAmount] = useState("");
   const [clientCuit, setClientCuit] = useState("");
   const [description, setDescription] = useState("");
+  const [concept, setConcept] = useState<"1" | "2">("1"); // 1 Productos, 2 Servicios
+  const [serviceDateFrom, setServiceDateFrom] = useState("");
+  const [serviceDateTo, setServiceDateTo] = useState("");
+  const [paymentDueDate, setPaymentDueDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // se mantiene la misma key mientras no se emita con éxito: si el usuario reintenta
@@ -382,11 +386,20 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           amount: Number(amount),
           clientCuit: clientCuit || undefined,
           description: description || undefined,
+          concept: Number(concept),
+          ...(concept === "2" && {
+            serviceDateFrom,
+            serviceDateTo,
+            paymentDueDate,
+          }),
         }),
       });
       setAmount("");
       setClientCuit("");
       setDescription("");
+      setServiceDateFrom("");
+      setServiceDateTo("");
+      setPaymentDueDate("");
       setIdempotencyKey(crypto.randomUUID());
       onCreated();
     } catch (err) {
@@ -402,14 +415,55 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
         <h2 className="font-serif text-base font-semibold text-ink">Nueva factura</h2>
       </div>
       <div className="space-y-4 px-5 py-5">
-        <Field label="Descripción" hint="Qué estás facturando — va como ítem en el PDF, vacío = 'Servicio'">
-          <input
-            placeholder="Ej: Desarrollo de landing page"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={inputClass}
-          />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
+          <Field label="Descripción" hint="Qué estás facturando — va como ítem en el PDF, vacío = 'Servicio'">
+            <input
+              placeholder="Ej: Desarrollo de landing page"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Tipo">
+            <select value={concept} onChange={(e) => setConcept(e.target.value as "1" | "2")} className={inputClass}>
+              <option value="1">Producto</option>
+              <option value="2">Servicio</option>
+            </select>
+          </Field>
+        </div>
+
+        {concept === "2" && (
+          <div className="grid gap-4 border border-line bg-paper p-4 sm:grid-cols-3">
+            <Field label="Servicio desde" hint="Período facturado">
+              <input
+                type="date"
+                value={serviceDateFrom}
+                onChange={(e) => setServiceDateFrom(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Servicio hasta">
+              <input
+                type="date"
+                value={serviceDateTo}
+                onChange={(e) => setServiceDateTo(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Vto. de pago">
+              <input
+                type="date"
+                value={paymentDueDate}
+                onChange={(e) => setPaymentDueDate(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </Field>
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_auto] sm:items-end">
           <Field label="Pto. venta" hint="1 si es tu único punto de venta">
             <input

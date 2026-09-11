@@ -5,6 +5,10 @@ export function formatDateYYYYMMDD(date: Date): string {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
+export function formatDateStringYYYYMMDD(yyyyMmDd: string): string {
+  return yyyyMmDd.replace(/-/g, '');
+}
+
 export function formatDateDDMMYYYY(date: Date): string {
   return formatDateStringDDMMYYYY(date.toISOString().slice(0, 10));
 }
@@ -61,6 +65,10 @@ export interface GeneratePdfInput {
   issueDate: Date;
   clientCuit?: string;
   description?: string;
+  concept: 1 | 2 | 3;
+  serviceDateFrom?: string; // yyyy-mm-dd, requerido si concept es 2 o 3
+  serviceDateTo?: string;
+  paymentDueDate?: string;
   businessName: string;
   address: string;
   grossIncome: string;
@@ -73,6 +81,10 @@ export interface EmitVoucherInput {
   salesPoint: number;
   amount: number;
   clientCuit?: string; // si no hay CUIT del cliente, se factura a consumidor final
+  concept: 1 | 2 | 3; // 1 Productos, 2 Servicios, 3 Ambos
+  serviceDateFrom?: string; // yyyy-mm-dd, requerido si concept es 2 o 3
+  serviceDateTo?: string;
+  paymentDueDate?: string;
 }
 
 export interface EmitVoucherResult {
@@ -88,6 +100,15 @@ export interface EmitVoucherResult {
 @Injectable()
 export class AfipClientService {
   async emitInvoice(input: EmitVoucherInput): Promise<EmitVoucherResult> {
+    // ARCA exige período facturado y vencimiento de pago cuando el concepto no es
+    // "solo productos" (WSFEv1: FchServDesde/FchServHasta/FchVtoPago obligatorios
+    // si Concepto es 2 o 3) — sin esto rechaza el comprobante. Se valida antes de
+    // instanciar el cliente para no depender del certificado en este chequeo.
+    const isService = input.concept === 2 || input.concept === 3;
+    if (isService && (!input.serviceDateFrom || !input.serviceDateTo || !input.paymentDueDate)) {
+      throw new Error('Servicios requiere período facturado (desde/hasta) y fecha de vencimiento de pago');
+    }
+
     const afip = buildAfipClient(input);
 
     const docTipo = input.clientCuit ? 80 : 99; // 80 = CUIT, 99 = consumidor final sin identificar
@@ -99,8 +120,13 @@ export class AfipClientService {
         CantReg: 1,
         PtoVta: input.salesPoint,
         CbteTipo: 11, // Factura C
-        Concepto: 1, // productos
+        Concepto: input.concept,
         CbteFch: formatDateYYYYMMDD(new Date()),
+        ...(isService && {
+          FchServDesde: formatDateStringYYYYMMDD(input.serviceDateFrom!),
+          FchServHasta: formatDateStringYYYYMMDD(input.serviceDateTo!),
+          FchVtoPago: formatDateStringYYYYMMDD(input.paymentDueDate!),
+        }),
         DocTipo: docTipo,
         DocNro: docNro,
         // ponytail: condición de IVA fija (5 = Consumidor Final, 1 = Responsable
@@ -160,7 +186,10 @@ export class AfipClientService {
             sale_condition: 'Contado',
             currency_id: 'ARS',
             currency_rate: 1,
-            concept: 1,
+            concept: input.concept,
+            ...(input.serviceDateFrom && { billing_from: formatDateStringDDMMYYYY(input.serviceDateFrom) }),
+            ...(input.serviceDateTo && { billing_to: formatDateStringDDMMYYYY(input.serviceDateTo) }),
+            ...(input.paymentDueDate && { payment_due_date: formatDateStringDDMMYYYY(input.paymentDueDate) }),
             items: [
               {
                 code: '001',

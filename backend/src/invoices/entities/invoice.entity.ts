@@ -28,6 +28,18 @@ export class Invoice {
   @Column({ nullable: true })
   description?: string;
 
+  @Column({ default: 1 })
+  concept: 1 | 2 | 3;
+
+  @Column({ type: 'date', nullable: true })
+  serviceDateFrom?: string;
+
+  @Column({ type: 'date', nullable: true })
+  serviceDateTo?: string;
+
+  @Column({ type: 'date', nullable: true })
+  paymentDueDate?: string;
+
   @Column({ nullable: true })
   cae?: string;
 
