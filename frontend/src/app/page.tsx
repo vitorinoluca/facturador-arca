@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSession } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
+import { Footer } from "@/components/footer";
 
 export default function LandingPage() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -148,20 +149,3 @@ function Security() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-line">
-      <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-ink-muted sm:flex-row">
-        <span>Facturador ARCA — proyecto de portfolio, sin relación con ARCA/AFIP.</span>
-        <div className="flex gap-4">
-          <Link href="/legal" className="hover:text-ink">
-            Legal
-          </Link>
-          <a href="https://github.com/vitorinoluca/facturador-arca" target="_blank" className="hover:text-ink">
-            GitHub
-          </a>
-        </div>
-      </div>
-    </footer>
-  );
-}

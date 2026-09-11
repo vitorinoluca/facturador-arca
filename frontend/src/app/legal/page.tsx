@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SealMark } from "@/components/seal-mark";
+import { Footer } from "@/components/footer";
 
 export default function LegalPage() {
   return (
@@ -85,6 +86,8 @@ export default function LegalPage() {
           </p>
         </section>
       </main>
+
+      <Footer />
     </div>
   );
 }

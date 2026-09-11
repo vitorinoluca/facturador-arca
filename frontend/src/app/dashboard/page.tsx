@@ -1,9 +1,11 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, apiBlob, getSession, logout } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
+import { Footer } from "@/components/footer";
 
 type Credential = { id: string; cuit: string; environment: "testing" | "production"; businessName: string };
 type Invoice = {
@@ -70,10 +72,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-full bg-paper">
+    <div className="flex min-h-full flex-col bg-paper">
       <Masthead credential={credential} onLogout={handleLogout} onDeleteCredential={handleDeleteCredential} />
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
         {error && (
           <div className="mb-6 border border-status-failed/30 bg-status-failed-tint px-4 py-2 text-sm text-status-failed">
             {error}
@@ -90,6 +92,8 @@ export default function DashboardPage() {
           </>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }
@@ -108,7 +112,7 @@ function Masthead({
   return (
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-4xl items-end justify-between px-6 py-5">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <SealMark className="h-8 w-8 shrink-0 text-accent" />
           <div>
             <h1 className="font-serif text-xl font-semibold leading-none text-ink">
@@ -118,7 +122,7 @@ function Masthead({
               Emisión de Factura C — WSFEv1
             </p>
           </div>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-4">
           {credential && (

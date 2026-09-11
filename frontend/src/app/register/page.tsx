@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
+import { Footer } from "@/components/footer";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -28,10 +29,13 @@ export default function RegisterPage() {
   }
 
   return (
+    <div className="flex flex-1 flex-col">
     <main className="flex flex-1 items-center justify-center bg-paper p-6">
       <div className="w-full max-w-sm border border-line bg-surface">
         <div className="border-b border-line px-8 py-6 text-center">
-          <SealMark className="mx-auto h-8 w-8 text-accent" />
+          <Link href="/" className="inline-block">
+            <SealMark className="mx-auto h-8 w-8 text-accent" />
+          </Link>
           <h1 className="mt-2 font-serif text-lg font-semibold text-ink">Facturador ARCA</h1>
           <p className="mt-1 text-xs text-ink-muted">Creá tu cuenta</p>
         </div>
@@ -71,5 +75,7 @@ export default function RegisterPage() {
         </form>
       </div>
     </main>
+    <Footer />
+    </div>
   );
 }
