@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { decrypt, encrypt } from '../common/crypto.util';
@@ -42,6 +42,17 @@ export class AfipCredentialsService {
   async findForUser(userId: string) {
     const rows = await this.repo.find({ where: { userId } });
     return rows.map((r) => ({ id: r.id, cuit: r.cuit, environment: r.environment, businessName: r.businessName }));
+  }
+
+  async remove(userId: string, credentialId: string) {
+    const result = await this.repo.delete({ id: credentialId, userId });
+    if (result.affected === 0) {
+      throw new NotFoundException('credencial no encontrada');
+    }
+    // las facturas ya emitidas quedan intactas (guardan sus propios datos, como el
+    // CAE); solo se pierde la posibilidad de volver a generar el PDF con esta
+    // credencial hasta que se cargue una nueva.
+    return { deleted: true };
   }
 
   // uso interno del módulo de invoices: nunca se expone cert/key por HTTP

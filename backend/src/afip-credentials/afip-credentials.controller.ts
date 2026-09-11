@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
@@ -21,5 +21,10 @@ export class AfipCredentialsController {
   @Get()
   findMine(@CurrentUser() user: AuthenticatedUser) {
     return this.service.findForUser(user.id);
+  }
+
+  @Delete(':id')
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.service.remove(user.id, id);
   }
 }

@@ -53,9 +53,22 @@ export default function DashboardPage() {
 
   const credential = credentials?.[0] ?? null;
 
+  async function handleDeleteCredential() {
+    if (!credential) return;
+    if (!confirm("¿Borrar esta credencial? Vas a tener que cargar el certificado de nuevo para volver a facturar.")) {
+      return;
+    }
+    try {
+      await api(`/afip-credentials/${credential.id}`, { method: "DELETE" });
+      await loadAll();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   return (
     <div className="min-h-full bg-paper">
-      <Masthead credential={credential} onLogout={handleLogout} />
+      <Masthead credential={credential} onLogout={handleLogout} onDeleteCredential={handleDeleteCredential} />
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         {error && (
@@ -83,9 +96,11 @@ export default function DashboardPage() {
 function Masthead({
   credential,
   onLogout,
+  onDeleteCredential,
 }: {
   credential: Credential | null;
   onLogout: () => void;
+  onDeleteCredential: () => void;
 }) {
   return (
     <header className="border-b border-line bg-surface">
@@ -109,6 +124,9 @@ function Masthead({
               <div className="font-mono">
                 CUIT {credential.cuit} · {credential.environment === "production" ? "producción" : "testing"}
               </div>
+              <button onClick={onDeleteCredential} className="mt-0.5 text-status-failed underline">
+                borrar credencial
+              </button>
             </div>
           )}
           <button
