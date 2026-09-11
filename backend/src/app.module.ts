@@ -21,7 +21,9 @@ import { InvoicesModule } from './invoices/invoices.module';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: [User, AfipCredential, Invoice, IdempotencyKey],
-      synchronize: true, // dev only, hasta que existan migraciones
+      migrations: [__dirname + '/migrations/*.{js,ts}'],
+      migrationsRun: true, // corre las migraciones pendientes solas al arrancar
+      synchronize: false,
     }),
     AuthModule,
     AfipCredentialsModule,
