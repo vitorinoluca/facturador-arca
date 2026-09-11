@@ -25,20 +25,38 @@ export class AfipCredentialsService {
         certEncrypted: encrypt(dto.cert),
         keyEncrypted: encrypt(dto.key),
         environment: dto.environment ?? 'testing',
+        businessName: dto.businessName,
+        address: dto.address,
+        grossIncome: dto.grossIncome ?? 'Exento',
+        activityStartDate: dto.activityStartDate,
       }),
     );
-    return { id: saved.id, cuit: saved.cuit, environment: saved.environment };
+    return {
+      id: saved.id,
+      cuit: saved.cuit,
+      environment: saved.environment,
+      businessName: saved.businessName,
+    };
   }
 
   async findForUser(userId: string) {
     const rows = await this.repo.find({ where: { userId } });
-    return rows.map((r) => ({ id: r.id, cuit: r.cuit, environment: r.environment }));
+    return rows.map((r) => ({ id: r.id, cuit: r.cuit, environment: r.environment, businessName: r.businessName }));
   }
 
   // uso interno del módulo de invoices: nunca se expone cert/key por HTTP
   async getDecrypted(userId: string, credentialId: string) {
     const row = await this.repo.findOneBy({ id: credentialId, userId });
     if (!row) return null;
-    return { cuit: row.cuit, cert: decrypt(row.certEncrypted), key: decrypt(row.keyEncrypted), environment: row.environment };
+    return {
+      cuit: row.cuit,
+      cert: decrypt(row.certEncrypted),
+      key: decrypt(row.keyEncrypted),
+      environment: row.environment,
+      businessName: row.businessName,
+      address: row.address,
+      grossIncome: row.grossIncome,
+      activityStartDate: row.activityStartDate,
+    };
   }
 }

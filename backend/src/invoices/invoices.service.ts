@@ -135,6 +135,10 @@ export class InvoicesService {
       caeExpiration: invoice.caeExpiration!,
       issueDate: invoice.createdAt,
       clientCuit: invoice.clientCuit,
+      businessName: credential.businessName,
+      address: credential.address,
+      grossIncome: credential.grossIncome,
+      activityStartDate: credential.activityStartDate,
     });
 
     const response = await fetch(url);

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, apiBlob, clearToken, isLoggedIn } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 
-type Credential = { id: string; cuit: string; environment: "testing" | "production" };
+type Credential = { id: string; cuit: string; environment: "testing" | "production"; businessName: string };
 type Invoice = {
   id: string;
   salesPoint: number;
@@ -105,9 +105,9 @@ function Masthead({
         <div className="flex items-center gap-4">
           {credential && (
             <div className="hidden text-right text-xs leading-tight text-ink-muted sm:block">
-              <div className="font-mono text-ink">CUIT {credential.cuit}</div>
-              <div>
-                {credential.environment === "production" ? "Ambiente: producción" : "Ambiente: testing"}
+              <div className="text-ink">{credential.businessName}</div>
+              <div className="font-mono">
+                CUIT {credential.cuit} · {credential.environment === "production" ? "producción" : "testing"}
               </div>
             </div>
           )}
@@ -148,6 +148,10 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [cert, setCert] = useState("");
   const [key, setKey] = useState("");
   const [environment, setEnvironment] = useState<"testing" | "production">("testing");
+  const [businessName, setBusinessName] = useState("");
+  const [address, setAddress] = useState("");
+  const [grossIncome, setGrossIncome] = useState("");
+  const [activityStartDate, setActivityStartDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -159,7 +163,16 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
     try {
       await api("/afip-credentials", {
         method: "POST",
-        body: JSON.stringify({ cuit, cert, key, environment }),
+        body: JSON.stringify({
+          cuit,
+          cert,
+          key,
+          environment,
+          businessName,
+          address,
+          grossIncome: grossIncome || undefined,
+          activityStartDate,
+        }),
       });
       onCreated();
     } catch (err) {
@@ -198,6 +211,46 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
             className={inputClass}
           />
         </Field>
+
+        <Field label="Razón social" hint="Va impresa en el PDF de la factura">
+          <input
+            placeholder="Tu nombre y apellido, o el nombre de tu actividad"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            required
+            className={inputClass}
+          />
+        </Field>
+
+        <Field label="Domicilio comercial">
+          <input
+            placeholder="Calle 123, La Plata, Buenos Aires"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+            className={inputClass}
+          />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Ingresos Brutos" hint="Tu N° de IIBB, o dejalo así si estás exento">
+            <input
+              placeholder="Exento"
+              value={grossIncome}
+              onChange={(e) => setGrossIncome(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Inicio de actividades">
+            <input
+              type="date"
+              value={activityStartDate}
+              onChange={(e) => setActivityStartDate(e.target.value)}
+              required
+              className={inputClass}
+            />
+          </Field>
+        </div>
 
         <Field label="Certificado (.crt)" hint="Contenido completo del archivo, incluidas las líneas BEGIN/END">
           <textarea

@@ -6,7 +6,11 @@ function formatDateYYYYMMDD(date: Date): string {
 }
 
 function formatDateDDMMYYYY(date: Date): string {
-  const [y, m, d] = date.toISOString().slice(0, 10).split('-');
+  return formatDateStringDDMMYYYY(date.toISOString().slice(0, 10));
+}
+
+function formatDateStringDDMMYYYY(yyyyMmDd: string): string {
+  const [y, m, d] = yyyyMmDd.split('-');
   return `${d}/${m}/${y}`;
 }
 
@@ -42,6 +46,10 @@ export interface GeneratePdfInput {
   caeExpiration: string; // yyyy-mm-dd
   issueDate: Date;
   clientCuit?: string;
+  businessName: string;
+  address: string;
+  grossIncome: string;
+  activityStartDate: string; // yyyy-mm-dd
 }
 
 export interface EmitVoucherInput {
@@ -108,9 +116,7 @@ export class AfipClientService {
   }
 
   // Arma el PDF con el diseño oficial de Factura C vía la plantilla hosteada de
-  // afipsdk.com. ponytail: datos del emisor (razón social, domicilio, ingresos
-  // brutos) genéricos porque el modelo de datos no tiene perfil de negocio
-  // todavía — se completa cuando haga falta mostrar los datos reales.
+  // afipsdk.com, con los datos reales del emisor cargados en la credencial.
   async generatePdf(input: GeneratePdfInput): Promise<string> {
     const afip = buildAfipClient(input);
     const hasClientCuit = !!input.clientCuit;
@@ -128,11 +134,11 @@ export class AfipClientService {
             cae_due_date: formatDateDDMMYYYY(new Date(input.caeExpiration)),
             issuer_cuit: Number(input.cuit),
             cae: Number(input.cae),
-            issuer_business_name: `CUIT ${input.cuit}`,
-            issuer_address: '-',
+            issuer_business_name: input.businessName,
+            issuer_address: input.address,
             issuer_iva_condition: 'Responsable Monotributo',
-            issuer_gross_income: '-',
-            issuer_activity_start_date: formatDateDDMMYYYY(input.issueDate),
+            issuer_gross_income: input.grossIncome,
+            issuer_activity_start_date: formatDateStringDDMMYYYY(input.activityStartDate),
             receiver_name: hasClientCuit ? `CUIT ${input.clientCuit}` : 'CONSUMIDOR FINAL',
             receiver_address: '-',
             receiver_document_type: hasClientCuit ? 80 : 99,

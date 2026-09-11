@@ -21,6 +21,19 @@ export class AfipCredential {
   @Column({ default: 'testing' })
   environment: 'testing' | 'production';
 
+  // datos reales del emisor para el PDF de la factura (antes iban hardcodeados)
+  @Column()
+  businessName: string;
+
+  @Column()
+  address: string;
+
+  @Column({ default: 'Exento' })
+  grossIncome: string;
+
+  @Column({ type: 'date' })
+  activityStartDate: string;
+
   @CreateDateColumn()
   createdAt: Date;
 }
