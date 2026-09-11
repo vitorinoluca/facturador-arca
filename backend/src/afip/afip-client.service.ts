@@ -60,6 +60,7 @@ export interface GeneratePdfInput {
   caeExpiration: string; // yyyy-mm-dd
   issueDate: Date;
   clientCuit?: string;
+  description?: string;
   businessName: string;
   address: string;
   grossIncome: string;
@@ -163,7 +164,7 @@ export class AfipClientService {
             items: [
               {
                 code: '001',
-                description: 'Servicio',
+                description: input.description?.trim() || 'Servicio',
                 quantity: 1,
                 unit_price: input.amount,
                 subtotal: input.amount,

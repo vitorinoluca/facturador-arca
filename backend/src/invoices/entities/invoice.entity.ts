@@ -26,6 +26,9 @@ export class Invoice {
   clientCuit?: string;
 
   @Column({ nullable: true })
+  description?: string;
+
+  @Column({ nullable: true })
   cae?: string;
 
   @Column({ nullable: true })

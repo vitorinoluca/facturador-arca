@@ -359,6 +359,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
   const [salesPoint, setSalesPoint] = useState("1");
   const [amount, setAmount] = useState("");
   const [clientCuit, setClientCuit] = useState("");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // se mantiene la misma key mientras no se emita con éxito: si el usuario reintenta
@@ -380,10 +381,12 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           salesPoint: Number(salesPoint),
           amount: Number(amount),
           clientCuit: clientCuit || undefined,
+          description: description || undefined,
         }),
       });
       setAmount("");
       setClientCuit("");
+      setDescription("");
       setIdempotencyKey(crypto.randomUUID());
       onCreated();
     } catch (err) {
@@ -398,33 +401,43 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
       <div className="border-b border-line px-5 py-3">
         <h2 className="font-serif text-base font-semibold text-ink">Nueva factura</h2>
       </div>
-      <div className="grid gap-4 px-5 py-5 sm:grid-cols-[100px_160px_1fr_auto] sm:items-end">
-        <Field label="Pto. venta" hint="1 si es tu único punto de venta">
+      <div className="space-y-4 px-5 py-5">
+        <Field label="Descripción" hint="Qué estás facturando — va como ítem en el PDF, vacío = 'Servicio'">
           <input
-            type="number"
-            value={salesPoint}
-            onChange={(e) => setSalesPoint(e.target.value)}
-            required
+            placeholder="Ej: Desarrollo de landing page"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             className={inputClass}
           />
         </Field>
-        <Field label="Monto">
-          <input
-            type="number"
-            step="0.01"
-            placeholder="0,00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-            className={inputClass + " tabular-nums"}
-          />
-        </Field>
-        <Field label="CUIT del cliente" hint="Vacío = consumidor final">
-          <input value={clientCuit} onChange={(e) => setClientCuit(e.target.value)} className={inputClass} />
-        </Field>
-        <button type="submit" disabled={loading} className={primaryButtonClass}>
-          {loading ? "Emitiendo..." : "Emitir"}
-        </button>
+        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_auto] sm:items-end">
+          <Field label="Pto. venta" hint="1 si es tu único punto de venta">
+            <input
+              type="number"
+              value={salesPoint}
+              onChange={(e) => setSalesPoint(e.target.value)}
+              required
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Monto">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="0,00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+              className={inputClass + " tabular-nums"}
+            />
+          </Field>
+          <Field label="CUIT del cliente" hint="Vacío = consumidor final">
+            <input value={clientCuit} onChange={(e) => setClientCuit(e.target.value)} className={inputClass} />
+          </Field>
+          <button type="submit" disabled={loading} className={primaryButtonClass}>
+            {loading ? "Emitiendo..." : "Emitir"}
+          </button>
+        </div>
       </div>
       {error && (
         <p className="border-t border-status-failed/30 bg-status-failed-tint px-5 py-2 text-sm text-status-failed">
