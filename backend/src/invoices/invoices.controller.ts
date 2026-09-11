@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -24,7 +24,10 @@ export class InvoicesController {
   }
 
   @Get(':id/pdf')
-  async getPdf(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return { url: await this.invoicesService.getPdfUrl(user.id, id) };
+  @Header('Content-Type', 'application/pdf')
+  @Header('Content-Disposition', 'inline; filename="factura.pdf"')
+  async getPdf(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<StreamableFile> {
+    const buffer = await this.invoicesService.getPdfBuffer(user.id, id);
+    return new StreamableFile(buffer);
   }
 }

@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, clearToken, isLoggedIn } from "@/lib/api";
+import { api, apiBlob, clearToken, isLoggedIn } from "@/lib/api";
 
 type Credential = { id: string; cuit: string; environment: "testing" | "production" };
 type Invoice = {
@@ -511,8 +511,12 @@ function PdfLink({ invoiceId }: { invoiceId: string }) {
   async function handleClick() {
     setLoading(true);
     try {
-      const { url } = await api<{ url: string }>(`/invoices/${invoiceId}/pdf`, { method: "GET" });
-      window.open(url, "_blank");
+      const blob = await apiBlob(`/invoices/${invoiceId}/pdf`);
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank");
+      // se revoca después de un rato para no filtrar memoria; la pestaña nueva ya
+      // cargó el PDF en su propio contexto para entonces
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (err) {
       alert((err as Error).message);
     } finally {

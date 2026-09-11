@@ -64,7 +64,10 @@ export class InvoicesService {
     return this.invoiceRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
   }
 
-  async getPdfUrl(userId: string, invoiceId: string): Promise<string> {
+  // trae el PDF al servidor y lo devuelve como buffer en vez de redirigir al link de
+  // afipsdk.com: ese link fuerza la descarga (Content-Disposition: attachment) en vez
+  // de abrirlo en el navegador, y no podemos cambiar esa respuesta desde el cliente.
+  async getPdfBuffer(userId: string, invoiceId: string): Promise<Buffer> {
     const invoice = await this.invoiceRepo.findOneBy({ id: invoiceId, userId });
     if (!invoice || invoice.status !== InvoiceStatus.ISSUED) {
       throw new NotFoundException('factura no encontrada o no emitida');
@@ -74,7 +77,7 @@ export class InvoicesService {
       throw new NotFoundException('credencial de ARCA no encontrada');
     }
 
-    return this.afipClient.generatePdf({
+    const url = await this.afipClient.generatePdf({
       cuit: credential.cuit,
       cert: credential.cert,
       key: credential.key,
@@ -87,5 +90,11 @@ export class InvoicesService {
       issueDate: invoice.createdAt,
       clientCuit: invoice.clientCuit,
     });
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new NotFoundException('no se pudo descargar el PDF generado');
+    }
+    return Buffer.from(await response.arrayBuffer());
   }
 }

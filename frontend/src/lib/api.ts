@@ -23,6 +23,18 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   return body as T;
 }
 
+// para endpoints que devuelven binario (PDF) en vez de JSON
+export async function apiBlob(path: string): Promise<Blob> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    throw new Error(`error ${res.status}`);
+  }
+  return res.blob();
+}
+
 export function setToken(token: string) {
   localStorage.setItem("token", token);
 }
