@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* papel y superficie — frío, no cream */
+  --paper: #f4f6f5;
+  --surface: #ffffff;
+
+  /* tinta */
+  --ink: #1a2420;
+  --ink-muted: #5c6864;
+  --ink-faint: #94a09b;
+  --line: #d7dcd9;
+  --line-strong: #b9c1bd;
+
+  /* marca — pino/petróleo, tinta de sello oficial */
+  --accent: #1b4b43;
+  --accent-hover: #143a34;
+  --accent-tint: #e6edeb;
+
+  /* estados — no semáforo rojo/verde */
+  --status-issued: #2a4b6b;
+  --status-issued-tint: #e5ebf1;
+  --status-failed: #96412c;
+  --status-failed-tint: #f3e5df;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-tint: var(--accent-tint);
+  --color-status-issued: var(--status-issued);
+  --color-status-issued-tint: var(--status-issued-tint);
+  --color-status-failed: var(--status-failed);
+  --color-status-failed-tint: var(--status-failed-tint);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-serif: var(--font-source-serif);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* foco de teclado visible y consistente en toda la app */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
