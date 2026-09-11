@@ -31,38 +31,45 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">Crear cuenta</h1>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full rounded border px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Contraseña (mín. 8 caracteres)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-          className="w-full rounded border px-3 py-2"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded bg-black px-3 py-2 text-white disabled:opacity-50"
-        >
-          {loading ? "Creando..." : "Crear cuenta"}
-        </button>
-        <p className="text-sm text-gray-600">
-          ¿Ya tenés cuenta? <Link href="/login" className="underline">Iniciá sesión</Link>
-        </p>
-      </form>
+    <main className="flex flex-1 items-center justify-center bg-gray-50 p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <h1 className="text-xl font-semibold text-gray-900">Facturador ARCA</h1>
+        <p className="mt-1 text-sm text-gray-500">Creá tu cuenta</p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          <input
+            type="password"
+            placeholder="Contraseña (mín. 8 caracteres)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {loading ? "Creando..." : "Crear cuenta"}
+          </button>
+          <p className="text-sm text-gray-500">
+            ¿Ya tenés cuenta?{" "}
+            <Link href="/login" className="font-medium text-indigo-600 hover:underline">
+              Iniciá sesión
+            </Link>
+          </p>
+        </form>
+      </div>
     </main>
   );
 }
