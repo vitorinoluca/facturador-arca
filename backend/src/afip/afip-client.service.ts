@@ -18,23 +18,27 @@ export function formatDateStringDDMMYYYY(yyyyMmDd: string): string {
   return `${d}/${m}/${y}`;
 }
 
-// El certificado que autentica contra ARCA es UNO SOLO, de la app (no de cada
-// usuario): cada usuario delega la facturación electrónica en este CUIT desde el
-// Administrador de Relaciones de Clave Fiscal. El `CUIT` que se le pasa a Afip() acá
-// abajo es el del usuario REPRESENTADO — ARCA valida server-side que este
+// El certificado que autentica contra ARCA es UNO SOLO por ambiente, de la app (no
+// de cada usuario): cada usuario delega la facturación electrónica en este CUIT
+// desde el Administrador de Relaciones de Clave Fiscal. El `CUIT` que se le pasa a
+// Afip() abajo es el del usuario REPRESENTADO — ARCA valida server-side que este
 // certificado esté autorizado para actuar en su nombre; no hace falta que el
 // certificado le pertenezca.
-function getAppCertificate() {
-  const cert = process.env.AFIP_APP_CERT?.replace(/\\n/g, '\n');
-  const key = process.env.AFIP_APP_KEY?.replace(/\\n/g, '\n');
+// Testing y producción usan certificados DISTINTOS (ARCA no confía el mismo
+// certificado en los dos ambientes), así que hay un par de variables por ambiente.
+function getAppCertificate(environment: 'testing' | 'production') {
+  const prefix = environment === 'production' ? 'AFIP_APP_CERT_PRODUCTION' : 'AFIP_APP_CERT_TESTING';
+  const keyPrefix = environment === 'production' ? 'AFIP_APP_KEY_PRODUCTION' : 'AFIP_APP_KEY_TESTING';
+  const cert = process.env[prefix]?.replace(/\\n/g, '\n');
+  const key = process.env[keyPrefix]?.replace(/\\n/g, '\n');
   if (!cert || !key) {
-    throw new Error('AFIP_APP_CERT / AFIP_APP_KEY no están configurados en el servidor');
+    throw new Error(`${prefix} / ${keyPrefix} no están configurados en el servidor`);
   }
   return { cert, key };
 }
 
 function buildAfipClient(creds: { cuit: string; environment: 'testing' | 'production' }) {
-  const { cert, key } = getAppCertificate();
+  const { cert, key } = getAppCertificate(creds.environment);
   return new Afip({
     CUIT: creds.cuit,
     cert,
@@ -222,12 +226,11 @@ export class AfipClientService {
   }
 
   // Consulta la Constancia de Inscripción del CUIT dado (ws_sr_constancia_inscripcion)
-  // para autocompletar razón social, domicilio e inicio de actividades — evita que el
-  // usuario tenga que tipearlos a mano. Requiere que el certificado de la app esté
-  // autorizado a este servicio en ARCA (autorización separada de wsfe).
-  // ponytail: el shape exacto de la respuesta de ARCA no está 100% documentado por
-  // afipsdk — se probaron los caminos más comunes de la spec de constancia de
-  // inscripción; si ARCA cambia el formato, esto puede necesitar un ajuste.
+  // para autocompletar razón social y domicilio — evita que el usuario los tipee a
+  // mano. Requiere que el certificado de la app esté autorizado a este servicio en
+  // ARCA (autorización separada de wsfe). Verificado contra el servicio real: la
+  // respuesta NO trae fecha de inicio de actividades a este nivel — ese campo sigue
+  // siendo manual.
   async lookupTaxpayer(cuit: string, environment: 'testing' | 'production'): Promise<TaxpayerLookupResult | null> {
     const appCuit = process.env.AFIP_APP_CUIT;
     if (!appCuit) {

@@ -25,7 +25,7 @@ guía paso a paso dentro de la app (pantalla de alta de credencial).
 docker compose up -d          # Postgres
 
 cd backend
-cp .env.example .env          # completar JWT_SECRET, AFIPSDK_ACCESS_TOKEN, AFIP_APP_CERT/KEY
+cp .env.example .env          # completar JWT_SECRET, AFIPSDK_ACCESS_TOKEN, AFIP_APP_CERT/KEY_*
 npm install
 npm run start:dev             # http://localhost:3001, Swagger en /api
 
@@ -38,12 +38,14 @@ npm run dev                   # http://localhost:3000
 `AFIPSDK_ACCESS_TOKEN` se obtiene gratis registrándose en https://afipsdk.com — la librería
 `@afipsdk/afip.js` pasa por su proxy en vez de hablar directo con los webservices de ARCA.
 
-`AFIP_APP_CERT`/`AFIP_APP_KEY` son el certificado propio de la app (generado en ARCA, una vez),
-con los saltos de línea como `\n` literal en una sola línea de env var. `AFIP_APP_CUIT` es el CUIT
-dueño de ese certificado.
+`AFIP_APP_CERT_TESTING`/`AFIP_APP_KEY_TESTING` y `AFIP_APP_CERT_PRODUCTION`/`AFIP_APP_KEY_PRODUCTION`
+son los certificados propios de la app (generados en ARCA, uno por ambiente — ARCA no confía el
+mismo certificado en testing y producción), con los saltos de línea como `\n` literal en una sola
+línea de env var. `AFIP_APP_CUIT` es el CUIT dueño de ambos certificados.
 
-Para que el botón "Buscar datos" (autocompleta razón social/domicilio/inicio de actividades desde
-la Constancia de Inscripción) funcione, ese mismo certificado necesita estar autorizado además al
+Para que el botón "Buscar datos" (autocompleta razón social y domicilio desde la Constancia de
+Inscripción — ARCA no expone la fecha de inicio de actividades en esa respuesta, sigue siendo
+manual) funcione, ese mismo certificado necesita estar autorizado además al
 servicio **`ws_sr_constancia_inscripcion`** en ARCA (autorización separada de `wsfe`, mismo trámite
 del Administrador de Relaciones / WSASS).
 
