@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { SentryModule } from '@sentry/nestjs/setup';
-import { SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AfipCredentialsModule } from './afip-credentials/afip-credentials.module';
@@ -15,7 +13,6 @@ import { InvoicesModule } from './invoices/invoices.module';
 
 @Module({
   imports: [
-    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     // límite general de la app; login/register tienen su propio límite más estricto
     // vía @Throttle en el controller (son el blanco típico de fuerza bruta)
@@ -32,9 +29,6 @@ import { InvoicesModule } from './invoices/invoices.module';
     AfipCredentialsModule,
     InvoicesModule,
   ],
-  providers: [
-    { provide: APP_FILTER, useClass: SentryGlobalFilter },
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
