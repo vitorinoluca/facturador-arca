@@ -18,7 +18,9 @@ export default function LandingPage() {
       <Nav loggedIn={loggedIn} />
       <Hero loggedIn={loggedIn} />
       <HowItWorks />
+      <LedgerPreview />
       <Security />
+      <Faq />
       <Footer />
     </div>
   );
@@ -77,6 +79,18 @@ function Hero({ loggedIn }: { loggedIn: boolean }) {
           Ver el código
         </a>
       </div>
+      <a
+        href="https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml"
+        target="_blank"
+        className="mt-6 inline-block"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml/badge.svg"
+          alt="Estado del CI"
+          className="h-5"
+        />
+      </a>
     </section>
   );
 }
@@ -113,6 +127,104 @@ function HowItWorks() {
             </div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function LedgerPreview() {
+  const rows = [
+    { fecha: "10/09/2026", monto: "45.000", cae: "86370882189714", estado: "ok" as const },
+    { fecha: "08/09/2026", monto: "12.500", cae: "86370881763302", estado: "ok" as const },
+    { fecha: "05/09/2026", monto: "8.000", cae: "—", estado: "fail" as const },
+  ];
+
+  return (
+    <section className="mx-auto max-w-4xl px-6 py-16">
+      <p className="text-xs uppercase tracking-wide text-ink-muted">Así se ve</p>
+      <h2 className="mt-1 font-serif text-2xl font-semibold text-ink">
+        Un historial, no una lista de exports
+      </h2>
+      <p className="mt-2 max-w-xl text-sm text-ink-muted">
+        Cada fila es trazable: fecha, monto, CAE, y si algo falló, por qué — sin salir de la tabla.
+      </p>
+
+      <div className="mt-8 border border-line bg-surface">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-faint">
+              <th className="px-5 py-2 font-medium">Fecha</th>
+              <th className="px-2 py-2 text-right font-medium">Monto</th>
+              <th className="px-2 py-2 font-medium">CAE</th>
+              <th className="px-2 py-2 font-medium">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.fecha} className="border-b border-line last:border-0">
+                <td className="px-5 py-3 text-ink-muted">{r.fecha}</td>
+                <td className="px-2 py-3 text-right font-medium tabular-nums text-ink">${r.monto}</td>
+                <td className="px-2 py-3 font-mono text-xs tracking-tight text-ink-muted">{r.cae}</td>
+                <td className="px-2 py-3">
+                  {r.estado === "ok" ? (
+                    <span className="inline-flex items-center gap-1.5 text-status-issued">
+                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <circle cx="8" cy="8" r="6.4" />
+                        <path d="M5.2 8.1l1.8 1.8 3.6-4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className="text-sm font-medium">Emitida</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-status-failed">
+                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <circle cx="8" cy="8" r="6.4" />
+                        <path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" strokeLinecap="round" />
+                      </svg>
+                      <span className="text-sm font-medium">Falló</span>
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function Faq() {
+  const items = [
+    {
+      q: "¿Necesito mi propio certificado de ARCA?",
+      a: "No. Delegás la Facturación Electrónica en el CUIT de la app desde el Administrador de Relaciones de Clave Fiscal — dos clicks, sin generar certificados ni compartir claves.",
+    },
+    {
+      q: "¿Es gratis?",
+      a: "Sí, es un proyecto de portfolio sin costo. No hay planes pagos ni límites artificiales.",
+    },
+    {
+      q: "¿Puedo probarlo sin arriesgar nada?",
+      a: "Sí — elegís 'Testing (homologación)' al delegar. Emite comprobantes de prueba, sin CAE real ni validez fiscal, hasta que decidas pasar a producción.",
+    },
+    {
+      q: "¿Qué pasa si quiero dejar de usarlo?",
+      a: "Revocás la delegación desde ARCA cuando quieras, sin avisarnos. Tus facturas ya emitidas siguen siendo válidas — quedaron registradas en ARCA, no acá.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-line bg-surface py-16">
+      <div className="mx-auto max-w-3xl px-6">
+        <h2 className="font-serif text-2xl font-semibold text-ink">Preguntas frecuentes</h2>
+        <dl className="mt-8 space-y-6">
+          {items.map((item) => (
+            <div key={item.q}>
+              <dt className="font-medium text-ink">{item.q}</dt>
+              <dd className="mt-1 text-sm text-ink-muted">{item.a}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );

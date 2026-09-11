@@ -5,7 +5,11 @@ export function Footer() {
     <footer className="border-t border-line">
       <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-ink-muted sm:flex-row">
         <span>
-          Facturador ARCA — desarrollado por Fluxify.
+          Facturador ARCA — desarrollado por{" "}
+          <a href="https://fluxify.site" target="_blank" className="text-ink hover:underline">
+            Fluxify
+          </a>
+          .
         </span>
         <div className="flex gap-4">
           <Link href="/" className="hover:text-ink">
