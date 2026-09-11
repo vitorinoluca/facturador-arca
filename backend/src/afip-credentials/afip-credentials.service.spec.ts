@@ -54,14 +54,14 @@ describe('AfipCredentialsService', () => {
       expect(saved.grossIncome).toBe('Exento');
     });
 
-    it('usa "testing" como ambiente default', async () => {
+    it('siempre crea la credencial en ambiente "production" (el ambiente se elige por factura)', async () => {
       repo.findOneBy.mockResolvedValue(null);
       repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
 
       await service.create('user-1', dto);
 
       const saved = repo.save.mock.calls[0][0] as AfipCredential;
-      expect(saved.environment).toBe('testing');
+      expect(saved.environment).toBe('production');
     });
   });
 

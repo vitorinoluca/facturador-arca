@@ -51,7 +51,7 @@ export class InvoicesService {
       try {
         const result = await this.afipClient.emitInvoice({
           cuit: credential.cuit,
-          environment: credential.environment,
+          environment: dto.environment,
           salesPoint: dto.salesPoint,
           amount: dto.amount,
           clientCuit: dto.clientCuit,
@@ -65,6 +65,7 @@ export class InvoicesService {
           queryRunner.manager.create(Invoice, {
             userId,
             credentialId: dto.credentialId,
+            environment: dto.environment,
             salesPoint: dto.salesPoint,
             amount: dto.amount.toString(),
             clientCuit: dto.clientCuit,
@@ -84,6 +85,7 @@ export class InvoicesService {
           queryRunner.manager.create(Invoice, {
             userId,
             credentialId: dto.credentialId,
+            environment: dto.environment,
             salesPoint: dto.salesPoint,
             amount: dto.amount.toString(),
             clientCuit: dto.clientCuit,
@@ -137,7 +139,7 @@ export class InvoicesService {
 
     const url = await this.afipClient.generatePdf({
       cuit: credential.cuit,
-      environment: credential.environment,
+      environment: invoice.environment,
       salesPoint: invoice.salesPoint,
       voucherNumber: invoice.voucherNumber!,
       amount: Number(invoice.amount),

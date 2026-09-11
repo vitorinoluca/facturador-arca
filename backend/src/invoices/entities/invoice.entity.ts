@@ -19,6 +19,9 @@ export class Invoice {
   @Column()
   salesPoint: number;
 
+  @Column({ default: 'production' })
+  environment: 'testing' | 'production';
+
   @Column('decimal', { precision: 12, scale: 2 })
   amount: string;
 

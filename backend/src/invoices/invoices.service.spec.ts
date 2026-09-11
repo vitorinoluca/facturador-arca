@@ -62,7 +62,7 @@ describe('InvoicesService', () => {
     activityStartDate: '2020-01-01',
   };
 
-  const dto = { credentialId: 'cred-1', salesPoint: 1, amount: 1000 };
+  const dto = { credentialId: 'cred-1', environment: 'production' as const, salesPoint: 1, amount: 1000 };
 
   beforeEach(async () => {
     afipClient = { emitInvoice: jest.fn(), generatePdf: jest.fn() } as unknown as jest.Mocked<AfipClientService>;

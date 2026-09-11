@@ -21,7 +21,7 @@ export class AfipCredentialsService {
       this.repo.create({
         userId,
         cuit: dto.cuit,
-        environment: dto.environment ?? 'testing',
+        environment: 'production',
         businessName: dto.businessName,
         address: dto.address,
         grossIncome: dto.grossIncome ?? 'Exento',

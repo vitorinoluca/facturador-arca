@@ -10,6 +10,7 @@ import { Footer } from "@/components/footer";
 type Credential = { id: string; cuit: string; environment: "testing" | "production"; businessName: string };
 type Invoice = {
   id: string;
+  environment: "testing" | "production";
   salesPoint: number;
   amount: string;
   clientCuit?: string;
@@ -128,9 +129,7 @@ function Masthead({
           {credential && (
             <div className="hidden text-right text-xs leading-tight text-ink-muted sm:block">
               <div className="text-ink">{credential.businessName}</div>
-              <div className="font-mono">
-                CUIT {credential.cuit} · {credential.environment === "production" ? "producción" : "testing"}
-              </div>
+              <div className="font-mono">CUIT {credential.cuit}</div>
               <button onClick={onDeleteCredential} className="mt-0.5 text-status-failed underline">
                 borrar credencial
               </button>
@@ -171,7 +170,6 @@ const AFIP_APP_CUIT = process.env.NEXT_PUBLIC_AFIP_APP_CUIT ?? "tu-cuit-configur
 
 function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [cuit, setCuit] = useState("");
-  const [environment, setEnvironment] = useState<"testing" | "production">("testing");
   const [businessName, setBusinessName] = useState("");
   const [address, setAddress] = useState("");
   const [grossIncome, setGrossIncome] = useState("");
@@ -190,12 +188,10 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
     setError(null);
     setCheckingDelegation(true);
     try {
-      const data = await api<{ delegated: boolean; detail?: string }>(
-        `/afip-credentials/delegation/${cuit}?environment=${environment}`,
-      );
+      const data = await api<{ delegated: boolean; detail?: string }>(`/afip-credentials/delegation/${cuit}`);
       if (!data.delegated) {
         setError(
-          "Todavía no delegaste la Facturación Electrónica en ARCA para este CUIT y ambiente — completá el paso 1 de la guía.",
+          "Todavía no delegaste la Facturación Electrónica en ARCA para este CUIT — completá el paso 1 de la guía.",
         );
         return;
       }
@@ -216,7 +212,7 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
     setLookingUp(true);
     try {
       const data = await api<{ businessName: string; address: string; activityStartDate?: string }>(
-        `/afip-credentials/lookup/${cuit}?environment=${environment}`,
+        `/afip-credentials/lookup/${cuit}`,
       );
       setBusinessName(data.businessName);
       setAddress(data.address);
@@ -237,7 +233,6 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
         method: "POST",
         body: JSON.stringify({
           cuit,
-          environment,
           businessName,
           address,
           grossIncome: grossIncome || undefined,
@@ -277,21 +272,6 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
             disabled={delegationOk}
             className={inputClass}
           />
-        </Field>
-
-        <Field label="Ambiente" hint="Usá testing hasta confirmar que la delegación quedó bien hecha">
-          <select
-            value={environment}
-            onChange={(e) => {
-              setEnvironment(e.target.value as "testing" | "production");
-              setDelegationOk(false);
-            }}
-            disabled={delegationOk}
-            className={inputClass}
-          >
-            <option value="testing">Testing (homologación)</option>
-            <option value="production">Producción</option>
-          </select>
         </Field>
 
         {error && <p className="text-sm text-status-failed">{error}</p>}
@@ -443,9 +423,37 @@ function HelpStrip() {
   );
 }
 
+function EnvironmentSwitch({
+  value,
+  onChange,
+}: {
+  value: "testing" | "production";
+  onChange: (v: "testing" | "production") => void;
+}) {
+  return (
+    <div className="flex border border-line text-xs font-medium">
+      <button
+        type="button"
+        onClick={() => onChange("testing")}
+        className={`px-3 py-1.5 ${value === "testing" ? "bg-accent text-white" : "text-ink-muted hover:text-ink"}`}
+      >
+        Prueba
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("production")}
+        className={`px-3 py-1.5 ${value === "production" ? "bg-status-failed text-white" : "text-ink-muted hover:text-ink"}`}
+      >
+        Producción
+      </button>
+    </div>
+  );
+}
+
 /* ---------- quick entry (emitir factura, estilo boleta) ---------- */
 
 function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCreated: () => void }) {
+  const [environment, setEnvironment] = useState<"testing" | "production">("testing");
   const [salesPoint, setSalesPoint] = useState("1");
   const [amount, setAmount] = useState("");
   const [clientCuit, setClientCuit] = useState("");
@@ -472,6 +480,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
         headers: { "Idempotency-Key": idempotencyKey },
         body: JSON.stringify({
           credentialId: credential.id,
+          environment,
           salesPoint: Number(salesPoint),
           amount: Number(amount),
           clientCuit: clientCuit || undefined,
@@ -501,9 +510,15 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
 
   return (
     <form onSubmit={handleSubmit} className="mb-8 border border-line bg-surface">
-      <div className="border-b border-line px-5 py-3">
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
         <h2 className="font-serif text-base font-semibold text-ink">Nueva factura</h2>
+        <EnvironmentSwitch value={environment} onChange={setEnvironment} />
       </div>
+      {environment === "production" && (
+        <p className="border-b border-line bg-status-failed-tint px-5 py-2 text-xs font-medium text-status-failed">
+          Modo producción: esto emite un comprobante fiscal real con CAE real.
+        </p>
+      )}
       <div className="space-y-4 px-5 py-5">
         <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
           <Field label="Descripción" hint="Qué estás facturando — va como ítem en el PDF, vacío = 'Servicio'">
@@ -663,6 +678,11 @@ function Ledger({ invoices }: { invoices: Invoice[] }) {
                     {inv.cae ?? "—"}
                   </td>
                   <td className="px-2 py-3">
+                    {inv.environment === "testing" && (
+                      <span className="mr-1.5 border border-line px-1 text-[10px] font-medium text-ink-faint">
+                        PRUEBA
+                      </span>
+                    )}
                     <StatusMark status={inv.status} />
                   </td>
                   <td className="px-5 py-3 text-right">

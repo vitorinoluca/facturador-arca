@@ -4,6 +4,11 @@ export class CreateInvoiceDto {
   @IsUUID()
   credentialId: string;
 
+  // testing = homologación (comprobantes de prueba, sin validez fiscal), production
+  // = ARCA real. Se elige por factura, no por credencial.
+  @IsIn(['testing', 'production'])
+  environment: 'testing' | 'production';
+
   @IsNumber()
   @IsPositive()
   salesPoint: number;

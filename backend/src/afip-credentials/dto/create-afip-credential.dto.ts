@@ -1,12 +1,8 @@
-import { IsDateString, IsIn, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsDateString, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class CreateAfipCredentialDto {
   @Matches(/^\d{11}$/, { message: 'cuit debe tener 11 dígitos' })
   cuit: string;
-
-  @IsOptional()
-  @IsIn(['testing', 'production'])
-  environment?: 'testing' | 'production';
 
   @MinLength(2)
   businessName: string; // razón social, va en el PDF de la factura

@@ -22,7 +22,7 @@ export class AfipCredentialsController {
   @Get('lookup/:cuit')
   async lookup(
     @Param('cuit') cuit: string,
-    @Query('environment') environment: 'testing' | 'production' = 'testing',
+    @Query('environment') environment: 'testing' | 'production' = 'production',
   ) {
     if (!/^\d{11}$/.test(cuit)) {
       throw new BadRequestException('cuit debe tener 11 dígitos');
@@ -46,7 +46,7 @@ export class AfipCredentialsController {
   @Get('delegation/:cuit')
   async checkDelegation(
     @Param('cuit') cuit: string,
-    @Query('environment') environment: 'testing' | 'production' = 'testing',
+    @Query('environment') environment: 'testing' | 'production' = 'production',
   ) {
     if (!/^\d{11}$/.test(cuit)) {
       throw new BadRequestException('cuit debe tener 11 dígitos');
