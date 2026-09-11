@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import Afip from '@afipsdk/afip.js';
 
+function formatDateYYYYMMDD(date: Date): string {
+  return date.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
 export interface EmitVoucherInput {
   cuit: string;
   cert: string;
@@ -37,22 +41,38 @@ export class AfipClientService {
     const docTipo = input.clientCuit ? 80 : 99; // 80 = CUIT, 99 = consumidor final sin identificar
     const docNro = input.clientCuit ?? 0;
 
-    const result = await afip.ElectronicBilling.createNextVoucher({
-      CantReg: 1,
-      PtoVta: input.salesPoint,
-      CbteTipo: 11, // Factura C
-      Concepto: 1, // productos
-      DocTipo: docTipo,
-      DocNro: docNro,
-      ImpTotal: input.amount,
-      ImpTotConc: 0,
-      ImpNeto: input.amount,
-      ImpOpEx: 0,
-      ImpIVA: 0,
-      ImpTrib: 0,
-      MonId: 'PES',
-      MonCotiz: 1,
-    });
+    let result;
+    try {
+      result = await afip.ElectronicBilling.createNextVoucher({
+        CantReg: 1,
+        PtoVta: input.salesPoint,
+        CbteTipo: 11, // Factura C
+        Concepto: 1, // productos
+        CbteFch: formatDateYYYYMMDD(new Date()),
+        DocTipo: docTipo,
+        DocNro: docNro,
+        // ponytail: condición de IVA fija (5 = Consumidor Final, 1 = Responsable
+        // Inscripto si hay CUIT) — la condición real del receptor requiere
+        // consultarla con FEParamGetCondicionIvaReceptor; se ajusta cuando haga falta
+        // facturar a otras condiciones (monotributista, exento, etc.).
+        CondicionIVAReceptorId: input.clientCuit ? 1 : 5,
+        ImpTotal: input.amount,
+        ImpTotConc: 0,
+        ImpNeto: input.amount,
+        ImpOpEx: 0,
+        ImpIVA: 0,
+        ImpTrib: 0,
+        MonId: 'PES',
+        MonCotiz: 1,
+      });
+    } catch (err) {
+      // el interceptor de axios.js de @afipsdk/afip.js reescribe los errores HTTP del
+      // proxy de afipsdk.com como { message, status, data }, no como AxiosError normal
+      // (err.response.data) — el detalle real de por qué falló está en err.data.
+      const responseData = (err as { data?: unknown }).data;
+      const detail = responseData ? JSON.stringify(responseData) : (err as Error).message;
+      throw new Error(detail);
+    }
 
     return {
       cae: result.CAE,
