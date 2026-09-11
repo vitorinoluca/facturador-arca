@@ -27,7 +27,14 @@ export class AfipCredentialsController {
     if (!/^\d{11}$/.test(cuit)) {
       throw new BadRequestException('cuit debe tener 11 dígitos');
     }
-    const result = await this.afipClient.lookupTaxpayer(cuit, environment);
+    let result;
+    try {
+      result = await this.afipClient.lookupTaxpayer(cuit, environment);
+    } catch (err) {
+      // errores de ARCA (cert no autorizado, CUIT inexistente en el padrón de
+      // testing, etc.) no son errores nuestros — se muestran tal cual, no 500
+      throw new BadRequestException((err as Error).message);
+    }
     if (!result) {
       throw new BadRequestException('ARCA no encontró ese CUIT');
     }
