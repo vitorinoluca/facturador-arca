@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api, setToken } from "@/lib/api";
+import { SealMark } from "@/components/seal-mark";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,10 +35,7 @@ export default function RegisterPage() {
     <main className="flex flex-1 items-center justify-center bg-paper p-6">
       <div className="w-full max-w-sm border border-line bg-surface">
         <div className="border-b border-line px-8 py-6 text-center">
-          <svg viewBox="0 0 32 32" className="mx-auto h-8 w-8 text-accent" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <circle cx="16" cy="16" r="13.2" />
-            <path d="M10.5 16.2l3.6 3.6 7.4-8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <SealMark className="mx-auto h-8 w-8 text-accent" />
           <h1 className="mt-2 font-serif text-lg font-semibold text-ink">Facturador ARCA</h1>
           <p className="mt-1 text-xs text-ink-muted">Creá tu cuenta</p>
         </div>

@@ -20,13 +20,13 @@ const sourceSerif = Source_Serif_4({
 
 export const metadata: Metadata = {
   title: "Facturador ARCA",
-  description: "Facturación electrónica para monotributistas",
+  description: "Facturá en ARCA sin abrir el portal — Factura C con CAE real para monotributistas.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
