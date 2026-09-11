@@ -51,16 +51,25 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-full bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="min-h-full bg-gradient-to-b from-indigo-50/40 via-white to-white">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Facturador ARCA</h1>
-            <p className="text-xs text-gray-500">Facturación electrónica para monotributistas</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" />
+                <path d="M14 2v5h5" />
+                <path d="M8 13h8M8 17h5" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-base font-semibold leading-tight text-gray-900">Facturador ARCA</h1>
+              <p className="text-xs leading-tight text-gray-500">Facturación electrónica para monotributistas</p>
+            </div>
           </div>
           <button
             onClick={handleLogout}
-            className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+            className="rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           >
             Cerrar sesión
           </button>
@@ -76,7 +85,7 @@ export default function DashboardPage() {
 
         <HelpPanel />
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,340px)_1fr]">
           <CredentialsSection credentials={credentials} onCreated={loadAll} />
           <InvoicesSection credentials={credentials} invoices={invoices} onCreated={loadAll} />
         </div>
@@ -85,12 +94,29 @@ export default function DashboardPage() {
   );
 }
 
-function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Card({
+  title,
+  subtitle,
+  icon,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-      {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
-      <div className="mt-4">{children}</div>
+    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm shadow-gray-100/50">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          {icon}
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }
@@ -258,35 +284,43 @@ function CredentialsSection({
   }
 
   return (
-    <Card title="Credenciales de ARCA" subtitle="Certificado por CUIT, guardado encriptado">
-      <div className="mb-4 space-y-1.5">
-        {credentials.length === 0 && (
-          <p className="text-sm text-gray-400">Todavía no cargaste ninguna.</p>
-        )}
-        {credentials.map((c) => (
-          <div
-            key={c.id}
-            className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm"
-          >
-            <span className="font-medium text-gray-800">CUIT {c.cuit}</span>
-            <span
-              className={
-                "rounded-full px-2 py-0.5 text-xs font-medium " +
-                (c.environment === "production"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-gray-200 text-gray-600")
-              }
-            >
-              {c.environment === "production" ? "Producción" : "Testing"}
-            </span>
-          </div>
-        ))}
-      </div>
-
+    <Card
+      title="Credenciales de ARCA"
+      subtitle="Certificado por CUIT, guardado encriptado"
+      icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="11" width="18" height="10" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      }
+    >
       {credentials.length > 0 ? (
-        <p className="text-xs text-gray-400">
-          Una credencial por cuenta. Borrala en la base si necesitás cargar otra.
-        </p>
+        <div className="space-y-3">
+          {credentials.map((c) => (
+            <div
+              key={c.id}
+              className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-900">CUIT {c.cuit}</p>
+                <p className="text-xs text-gray-500">Lista para facturar</p>
+              </div>
+              <span
+                className={
+                  "rounded-full px-2.5 py-1 text-xs font-medium " +
+                  (c.environment === "production"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-gray-200 text-gray-600")
+                }
+              >
+                {c.environment === "production" ? "Producción" : "Testing"}
+              </span>
+            </div>
+          ))}
+          <p className="text-xs text-gray-400">
+            Una credencial por cuenta. Borrala en la base si necesitás cargar otra.
+          </p>
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
           <Field label="CUIT">
@@ -384,7 +418,17 @@ function InvoicesSection({
   }
 
   return (
-    <Card title="Facturas" subtitle="Factura C — consumidor final o con CUIT">
+    <Card
+      title="Facturas"
+      subtitle="Factura C — consumidor final o con CUIT"
+      icon={
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" />
+          <path d="M14 2v5h5" />
+          <path d="M8 13h8M8 17h5" />
+        </svg>
+      }
+    >
       <form onSubmit={handleSubmit} className="mb-6 grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Field label="Credencial">
@@ -404,7 +448,10 @@ function InvoicesSection({
           </Field>
         </div>
 
-        <Field label="Punto de venta">
+        <Field
+          label="Punto de venta"
+          hint="El número de caja/local habilitado en ARCA para facturar — si es el primero que creaste, es 1"
+        >
           <input
             type="number"
             value={salesPoint}
@@ -453,33 +500,35 @@ function InvoicesSection({
       </form>
 
       {invoices.length === 0 ? (
-        <p className="text-sm text-gray-400">Todavía no emitiste ninguna factura.</p>
+        <div className="rounded-xl border border-dashed border-gray-200 py-8 text-center">
+          <p className="text-sm text-gray-400">Todavía no emitiste ninguna factura.</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="-mx-2 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-400">
-                <th className="py-2 font-medium">Fecha</th>
-                <th className="font-medium">Monto</th>
-                <th className="font-medium">CAE</th>
-                <th className="font-medium">Estado</th>
+              <tr className="text-left text-xs uppercase tracking-wide text-gray-400">
+                <th className="px-2 py-2 font-medium">Fecha</th>
+                <th className="px-2 font-medium">Monto</th>
+                <th className="px-2 font-medium">CAE</th>
+                <th className="px-2 font-medium">Estado</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {invoices.map((inv) => (
-                <tr key={inv.id} className="border-b border-gray-100 last:border-0">
-                  <td className="py-2.5 text-gray-600">
+                <tr key={inv.id} className="rounded-lg hover:bg-gray-50">
+                  <td className="px-2 py-3 text-gray-600">
                     {new Date(inv.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="text-gray-900">
+                  <td className="px-2 font-medium text-gray-900">
                     ${Number(inv.amount).toLocaleString("es-AR")}
                   </td>
-                  <td className="font-mono text-xs text-gray-500">{inv.cae ?? "—"}</td>
-                  <td>
+                  <td className="px-2 font-mono text-xs text-gray-500">{inv.cae ?? "—"}</td>
+                  <td className="px-2">
                     <Badge status={inv.status} />
                   </td>
-                  <td className="text-right">
+                  <td className="px-2 text-right">
                     {inv.status === "issued" && <PdfLink invoiceId={inv.id} />}
                   </td>
                 </tr>
