@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import Afip from '@afipsdk/afip.js';
 
-function formatDateYYYYMMDD(date: Date): string {
+export function formatDateYYYYMMDD(date: Date): string {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-function formatDateDDMMYYYY(date: Date): string {
+export function formatDateDDMMYYYY(date: Date): string {
   return formatDateStringDDMMYYYY(date.toISOString().slice(0, 10));
 }
 
-function formatDateStringDDMMYYYY(yyyyMmDd: string): string {
+export function formatDateStringDDMMYYYY(yyyyMmDd: string): string {
   const [y, m, d] = yyyyMmDd.split('-');
   return `${d}/${m}/${y}`;
 }

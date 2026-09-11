@@ -1,5 +1,7 @@
 # facturador-arca
 
+[![CI](https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml/badge.svg)](https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml)
+
 Facturación electrónica (ARCA/WSFEv1) para monotributistas. Cada usuario carga su propio
 certificado ARCA y emite facturas C reales desde una UI simple, sin entrar al portal de ARCA.
 
