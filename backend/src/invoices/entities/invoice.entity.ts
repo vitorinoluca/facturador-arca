@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import type { ClientIvaCondition } from '../../afip/afip-client.service';
 
 export enum InvoiceStatus {
   ISSUED = 'issued',
@@ -27,6 +28,9 @@ export class Invoice {
 
   @Column({ nullable: true })
   clientCuit?: string;
+
+  @Column({ default: 'Consumidor Final' })
+  clientIvaCondition: ClientIvaCondition;
 
   @Column({ nullable: true })
   description?: string;

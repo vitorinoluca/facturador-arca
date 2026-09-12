@@ -14,6 +14,9 @@ type Invoice = {
   salesPoint: number;
   amount: string;
   clientCuit?: string;
+  concept: 1 | 2 | 3;
+  serviceDateFrom?: string;
+  serviceDateTo?: string;
   cae?: string;
   caeExpiration?: string;
   voucherNumber?: number;
@@ -21,6 +24,9 @@ type Invoice = {
   errorMessage?: string;
   createdAt: string;
 };
+
+const CLIENT_IVA_CONDITIONS = ["Consumidor Final", "Responsable Inscripto", "Monotributo", "Exento"] as const;
+type ClientIvaCondition = (typeof CLIENT_IVA_CONDITIONS)[number];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -456,6 +462,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
   const [environment, setEnvironment] = useState<"testing" | "production">("testing");
   const [salesPoint, setSalesPoint] = useState("1");
   const [amount, setAmount] = useState("");
+  const [clientIvaCondition, setClientIvaCondition] = useState<ClientIvaCondition>("Consumidor Final");
   const [clientCuit, setClientCuit] = useState("");
   const [description, setDescription] = useState("");
   const [saleCondition, setSaleCondition] = useState("Contado");
@@ -473,6 +480,10 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (clientIvaCondition !== "Consumidor Final" && !/^\d{11}$/.test(clientCuit)) {
+      setError("Esta condición de IVA requiere un CUIT válido (11 dígitos) del cliente");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -485,6 +496,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           salesPoint: Number(salesPoint),
           amount: Number(amount),
           clientCuit: clientCuit || undefined,
+          clientIvaCondition,
           description: description || undefined,
           saleCondition,
           concept: Number(concept),
@@ -571,7 +583,34 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_160px_auto] sm:items-end">
+        <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
+          <Field label="Condición de IVA del cliente">
+            <select
+              value={clientIvaCondition}
+              onChange={(e) => setClientIvaCondition(e.target.value as ClientIvaCondition)}
+              className={inputClass}
+            >
+              {CLIENT_IVA_CONDITIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            label="CUIT del cliente"
+            hint={clientIvaCondition === "Consumidor Final" ? "Vacío = consumidor final" : "Obligatorio"}
+          >
+            <input
+              value={clientCuit}
+              onChange={(e) => setClientCuit(e.target.value)}
+              required={clientIvaCondition !== "Consumidor Final"}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_auto] sm:items-end">
           <Field label="Pto. venta" hint="1 si es tu único punto de venta">
             <input
               type="number"
@@ -591,9 +630,6 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
               required
               className={inputClass + " tabular-nums"}
             />
-          </Field>
-          <Field label="CUIT del cliente" hint="Vacío = consumidor final">
-            <input value={clientCuit} onChange={(e) => setClientCuit(e.target.value)} className={inputClass} />
           </Field>
           <Field label="Condición de venta">
             <select value={saleCondition} onChange={(e) => setSaleCondition(e.target.value)} className={inputClass}>
@@ -643,6 +679,11 @@ function StatusMark({ status }: { status: "issued" | "failed" }) {
   );
 }
 
+function formatDDMMYYYY(yyyyMmDd: string): string {
+  const [y, m, d] = yyyyMmDd.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function Ledger({ invoices }: { invoices: Invoice[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -669,6 +710,8 @@ function Ledger({ invoices }: { invoices: Invoice[] }) {
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-faint">
               <th className="px-5 py-2 font-medium">Fecha</th>
+              <th className="px-2 py-2 font-medium">Tipo</th>
+              <th className="px-2 py-2 font-medium">Período Facturado</th>
               <th className="px-2 py-2 text-right font-medium">Monto</th>
               <th className="px-2 py-2 font-medium">CAE</th>
               <th className="px-2 py-2 font-medium">Estado</th>
@@ -681,6 +724,14 @@ function Ledger({ invoices }: { invoices: Invoice[] }) {
                 <tr className="border-b border-line last:border-0">
                   <td className="px-5 py-3 text-ink-muted">
                     {new Date(inv.createdAt).toLocaleDateString("es-AR")}
+                  </td>
+                  <td className="px-2 py-3 text-ink-muted">
+                    {inv.concept === 1 ? "Producto" : inv.concept === 2 ? "Servicio" : "Producto y Servicio"}
+                  </td>
+                  <td className="px-2 py-3 text-ink-muted">
+                    {inv.concept !== 1 && inv.serviceDateFrom && inv.serviceDateTo
+                      ? `${formatDDMMYYYY(inv.serviceDateFrom)}–${formatDDMMYYYY(inv.serviceDateTo)}`
+                      : "—"}
                   </td>
                   <td className="px-2 py-3 text-right font-medium tabular-nums text-ink">
                     ${Number(inv.amount).toLocaleString("es-AR")}
@@ -710,7 +761,7 @@ function Ledger({ invoices }: { invoices: Invoice[] }) {
                 </tr>
                 {inv.status === "failed" && expanded.has(inv.id) && (
                   <tr className="border-b border-line bg-status-failed-tint/40">
-                    <td colSpan={5} className="px-5 py-3 font-mono text-xs text-status-failed">
+                    <td colSpan={7} className="px-5 py-3 font-mono text-xs text-status-failed">
                       {inv.errorMessage}
                     </td>
                   </tr>

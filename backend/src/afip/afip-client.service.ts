@@ -50,6 +50,16 @@ function buildAfipClient(creds: { cuit: string; environment: 'testing' | 'produc
   });
 }
 
+// Códigos WSFEv1 de FEParamGetCondicionIvaReceptor (los únicos habilitados para
+// Factura C, la única que emite este proyecto).
+export const CLIENT_IVA_CONDITIONS = {
+  'Consumidor Final': 5,
+  'Responsable Inscripto': 1,
+  Monotributo: 6,
+  Exento: 4,
+} as const;
+export type ClientIvaCondition = keyof typeof CLIENT_IVA_CONDITIONS;
+
 export interface TaxpayerLookupResult {
   businessName: string;
   address: string;
@@ -74,6 +84,7 @@ export interface GeneratePdfInput {
   caeExpiration: string; // yyyy-mm-dd
   issueDate: Date;
   clientCuit?: string;
+  clientIvaCondition: ClientIvaCondition;
   description?: string;
   saleCondition: string;
   concept: 1 | 2 | 3;
@@ -91,7 +102,8 @@ export interface EmitVoucherInput {
   environment: 'testing' | 'production';
   salesPoint: number;
   amount: number;
-  clientCuit?: string; // si no hay CUIT del cliente, se factura a consumidor final
+  clientCuit?: string; // vacío solo permitido si clientIvaCondition es Consumidor Final
+  clientIvaCondition: ClientIvaCondition;
   concept: 1 | 2 | 3; // 1 Productos, 2 Servicios, 3 Ambos
   serviceDateFrom?: string; // yyyy-mm-dd, requerido si concept es 2 o 3
   serviceDateTo?: string;
@@ -140,11 +152,7 @@ export class AfipClientService {
         }),
         DocTipo: docTipo,
         DocNro: docNro,
-        // ponytail: condición de IVA fija (5 = Consumidor Final, 1 = Responsable
-        // Inscripto si hay CUIT) — la condición real del receptor requiere
-        // consultarla con FEParamGetCondicionIvaReceptor; se ajusta cuando haga falta
-        // facturar a otras condiciones (monotributista, exento, etc.).
-        CondicionIVAReceptorId: input.clientCuit ? 1 : 5,
+        CondicionIVAReceptorId: CLIENT_IVA_CONDITIONS[input.clientIvaCondition],
         ImpTotal: input.amount,
         ImpTotConc: 0,
         ImpNeto: input.amount,
@@ -193,7 +201,7 @@ export class AfipClientService {
             receiver_address: '-',
             receiver_document_type: hasClientCuit ? 80 : 99,
             receiver_document_number: hasClientCuit ? Number(input.clientCuit) : 0,
-            receiver_iva_condition: hasClientCuit ? 'Responsable Inscripto' : 'Consumidor Final',
+            receiver_iva_condition: input.clientIvaCondition,
             sale_condition: input.saleCondition,
             currency_id: 'ARS',
             currency_rate: 1,

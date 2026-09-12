@@ -39,6 +39,7 @@ describe('AfipClientService.emitInvoice — validación de Servicios', () => {
         environment: 'testing',
         salesPoint: 1,
         amount: 1000,
+        clientIvaCondition: 'Consumidor Final',
         concept: 2, // Servicios — exige las fechas
       }),
     ).rejects.toThrow(/período facturado/i);
