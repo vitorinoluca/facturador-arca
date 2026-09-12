@@ -569,6 +569,10 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
       onCreated();
     } catch (err) {
       setError((err as Error).message);
+      // aunque ARCA rechace el comprobante, el backend igual la guarda como "failed"
+      // en el historial — hay que refrescar la tabla también acá, no solo cuando sale
+      // bien, para que aparezca sin que el usuario tenga que recargar la página.
+      onCreated();
     } finally {
       setLoading(false);
     }
