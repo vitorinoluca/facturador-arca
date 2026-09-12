@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +111,19 @@ export default function RegisterPage() {
                 required
                 minLength={8}
               />
+              <label className="flex items-start gap-2 text-xs text-ink-muted">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  required
+                  className="mt-0.5 shrink-0"
+                />
+                Acepto los{" "}
+                <Link href="/legal" target="_blank" className="font-medium text-accent underline">
+                  términos y condiciones
+                </Link>
+              </label>
               {error && <p className="text-sm text-status-failed">{error}</p>}
               <button
                 type="submit"
