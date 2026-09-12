@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
 import { Spinner } from "@/components/spinner";
+import { PasswordInput } from "@/components/password-input";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -57,14 +58,12 @@ export default function ResetPasswordPage() {
             <p className="px-8 py-6 text-sm text-ink-muted">Contraseña actualizada. Redirigiendo...</p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3 px-8 py-6">
-              <input
-                type="password"
+              <PasswordInput
                 placeholder="Contraseña nueva (mín. 8 caracteres)"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={setNewPassword}
                 required
                 minLength={8}
-                className="w-full border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
               />
               {error && <p className="text-sm text-status-failed">{error}</p>}
               <button

@@ -8,6 +8,7 @@ import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
 import { Spinner } from "@/components/spinner";
 import { GoogleButton } from "@/components/google-button";
+import { PasswordInput } from "@/components/password-input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,14 +70,7 @@ export default function LoginPage() {
             required
             className="w-full border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
           />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-          />
+          <PasswordInput placeholder="Contraseña" value={password} onChange={setPassword} required />
           <div className="text-right">
             <Link href="/forgot-password" className="text-xs text-ink-muted hover:text-ink hover:underline">
               ¿Olvidaste tu contraseña?
