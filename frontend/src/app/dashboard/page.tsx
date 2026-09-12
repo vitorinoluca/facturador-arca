@@ -583,7 +583,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
+        <div className={`grid gap-4 ${clientIvaCondition === "Consumidor Final" ? "" : "sm:grid-cols-[1fr_160px]"}`}>
           <Field label="Condición de IVA del cliente">
             <select
               value={clientIvaCondition}
@@ -597,20 +597,19 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
               ))}
             </select>
           </Field>
-          <Field
-            label="CUIT del cliente"
-            hint={clientIvaCondition === "Consumidor Final" ? "Vacío = consumidor final" : "Obligatorio"}
-          >
-            <input
-              value={clientCuit}
-              onChange={(e) => setClientCuit(e.target.value)}
-              required={clientIvaCondition !== "Consumidor Final"}
-              className={inputClass}
-            />
-          </Field>
+          {clientIvaCondition !== "Consumidor Final" && (
+            <Field label="CUIT del cliente" hint="Obligatorio">
+              <input
+                value={clientCuit}
+                onChange={(e) => setClientCuit(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </Field>
+          )}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_auto] sm:items-end">
+        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_auto] sm:items-start">
           <Field label="Pto. venta" hint="1 si es tu único punto de venta">
             <input
               type="number"
@@ -640,9 +639,12 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
               <option value="Cheque">Cheque</option>
             </select>
           </Field>
-          <button type="submit" disabled={loading} className={primaryButtonClass}>
-            {loading ? "Emitiendo..." : "Emitir"}
-          </button>
+          <div>
+            <span className="mb-1 block text-xs font-medium text-transparent select-none">Emitir</span>
+            <button type="submit" disabled={loading} className={`${primaryButtonClass} w-full`}>
+              {loading ? "Emitiendo..." : "Emitir"}
+            </button>
+          </div>
         </div>
       </div>
       {error && (
