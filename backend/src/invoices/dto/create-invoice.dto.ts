@@ -27,6 +27,12 @@ export class CreateInvoiceDto {
   @MaxLength(200)
   description?: string; // qué se factura — va como ítem en el PDF
 
+  // solo texto del PDF (no lo valida WSFEv1), pero condiciona lo que ARCA espera ver
+  // impreso en el comprobante
+  @IsOptional()
+  @IsIn(['Contado', 'Cuenta Corriente', 'Tarjeta de Crédito', 'Tarjeta de Débito', 'Cheque'])
+  saleCondition?: string;
+
   // 1 = Productos, 2 = Servicios, 3 = Productos y Servicios (códigos WSFEv1).
   // Si es Servicios (2 o 3), ARCA exige período facturado + vencimiento de pago.
   @IsOptional()

@@ -75,6 +75,7 @@ export interface GeneratePdfInput {
   issueDate: Date;
   clientCuit?: string;
   description?: string;
+  saleCondition: string;
   concept: 1 | 2 | 3;
   serviceDateFrom?: string; // yyyy-mm-dd, requerido si concept es 2 o 3
   serviceDateTo?: string;
@@ -193,7 +194,7 @@ export class AfipClientService {
             receiver_document_type: hasClientCuit ? 80 : 99,
             receiver_document_number: hasClientCuit ? Number(input.clientCuit) : 0,
             receiver_iva_condition: hasClientCuit ? 'Responsable Inscripto' : 'Consumidor Final',
-            sale_condition: 'Contado',
+            sale_condition: input.saleCondition,
             currency_id: 'ARS',
             currency_rate: 1,
             concept: input.concept,

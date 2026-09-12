@@ -31,6 +31,9 @@ export class Invoice {
   @Column({ nullable: true })
   description?: string;
 
+  @Column({ default: 'Contado' })
+  saleCondition: string;
+
   @Column({ default: 1 })
   concept: 1 | 2 | 3;
 

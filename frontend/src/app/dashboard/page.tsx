@@ -458,6 +458,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
   const [amount, setAmount] = useState("");
   const [clientCuit, setClientCuit] = useState("");
   const [description, setDescription] = useState("");
+  const [saleCondition, setSaleCondition] = useState("Contado");
   const [concept, setConcept] = useState<"1" | "2">("1"); // 1 Productos, 2 Servicios
   const [serviceDateFrom, setServiceDateFrom] = useState("");
   const [serviceDateTo, setServiceDateTo] = useState("");
@@ -485,6 +486,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           amount: Number(amount),
           clientCuit: clientCuit || undefined,
           description: description || undefined,
+          saleCondition,
           concept: Number(concept),
           ...(concept === "2" && {
             serviceDateFrom,
@@ -569,7 +571,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_auto] sm:items-end">
+        <div className="grid gap-4 sm:grid-cols-[100px_160px_1fr_160px_auto] sm:items-end">
           <Field label="Pto. venta" hint="1 si es tu único punto de venta">
             <input
               type="number"
@@ -592,6 +594,15 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           </Field>
           <Field label="CUIT del cliente" hint="Vacío = consumidor final">
             <input value={clientCuit} onChange={(e) => setClientCuit(e.target.value)} className={inputClass} />
+          </Field>
+          <Field label="Condición de venta">
+            <select value={saleCondition} onChange={(e) => setSaleCondition(e.target.value)} className={inputClass}>
+              <option value="Contado">Contado</option>
+              <option value="Cuenta Corriente">Cuenta Corriente</option>
+              <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+              <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+              <option value="Cheque">Cheque</option>
+            </select>
           </Field>
           <button type="submit" disabled={loading} className={primaryButtonClass}>
             {loading ? "Emitiendo..." : "Emitir"}
