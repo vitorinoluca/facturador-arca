@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Headers, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Headers, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -25,6 +25,11 @@ export class InvoicesController {
   @Get()
   findMine(@CurrentUser() user: AuthenticatedUser) {
     return this.invoicesService.findForUser(user.id);
+  }
+
+  @Delete(':id')
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.invoicesService.remove(user.id, id);
   }
 
   @Get(':id/pdf')

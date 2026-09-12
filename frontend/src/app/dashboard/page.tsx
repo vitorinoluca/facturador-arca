@@ -96,7 +96,7 @@ export default function DashboardPage() {
           <>
             <HelpStrip />
             <QuickEntryRow credential={credential} onCreated={loadAll} />
-            <Ledger invoices={invoices} />
+            <Ledger invoices={invoices} onDeleted={loadAll} />
           </>
         )}
       </main>
@@ -742,7 +742,13 @@ function formatDDMMYYYY(yyyyMmDd: string): string {
   return `${d}/${m}/${y}`;
 }
 
-function Ledger({ invoices }: { invoices: Invoice[] }) {
+// misma regla que el backend (invoices.service.ts remove()): una factura real ya
+// emitida (production + issued) nunca se puede borrar, el resto sí.
+function isDeletable(inv: Invoice): boolean {
+  return inv.environment === "testing" || inv.status === "failed";
+}
+
+function Ledger({ invoices, onDeleted }: { invoices: Invoice[]; onDeleted: () => void }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   function toggle(id: string) {
@@ -806,15 +812,18 @@ function Ledger({ invoices }: { invoices: Invoice[] }) {
                     <StatusMark status={inv.status} />
                   </td>
                   <td className="px-5 py-3 text-right">
-                    {inv.status === "issued" && <PdfLink invoiceId={inv.id} />}
-                    {inv.status === "failed" && (
-                      <button
-                        onClick={() => toggle(inv.id)}
-                        className="text-xs font-medium text-status-failed underline"
-                      >
-                        {expanded.has(inv.id) ? "ocultar" : "ver por qué falló"}
-                      </button>
-                    )}
+                    <div className="flex items-center justify-end gap-3">
+                      {inv.status === "issued" && <PdfLink invoiceId={inv.id} />}
+                      {inv.status === "failed" && (
+                        <button
+                          onClick={() => toggle(inv.id)}
+                          className="text-xs font-medium text-status-failed underline"
+                        >
+                          {expanded.has(inv.id) ? "ocultar" : "ver por qué falló"}
+                        </button>
+                      )}
+                      {isDeletable(inv) && <DeleteInvoiceButton invoiceId={inv.id} onDeleted={onDeleted} />}
+                    </div>
                   </td>
                 </tr>
                 {inv.status === "failed" && expanded.has(inv.id) && (
@@ -855,6 +864,29 @@ function PdfLink({ invoiceId }: { invoiceId: string }) {
   return (
     <button onClick={handleClick} disabled={loading} className="text-xs font-medium text-accent underline disabled:opacity-50">
       {loading ? "generando..." : "ver PDF"}
+    </button>
+  );
+}
+
+function DeleteInvoiceButton({ invoiceId, onDeleted }: { invoiceId: string; onDeleted: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    if (!confirm("¿Borrar esta factura del historial? No se puede deshacer.")) return;
+    setLoading(true);
+    try {
+      await api(`/invoices/${invoiceId}`, { method: "DELETE" });
+      onDeleted();
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button onClick={handleClick} disabled={loading} className="text-xs font-medium text-status-failed underline disabled:opacity-50">
+      {loading ? "borrando..." : "borrar"}
     </button>
   );
 }

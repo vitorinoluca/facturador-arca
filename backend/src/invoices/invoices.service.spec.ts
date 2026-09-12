@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
@@ -70,13 +70,13 @@ describe('InvoicesService', () => {
     clientIvaCondition: 'Consumidor Final' as const,
   };
 
-  let invoiceRepo: { findOneBy: jest.Mock };
+  let invoiceRepo: { findOneBy: jest.Mock; delete: jest.Mock };
 
   beforeEach(async () => {
     afipClient = { emitInvoice: jest.fn(), generatePdf: jest.fn() } as unknown as jest.Mocked<AfipClientService>;
     credentialsService = { get: jest.fn().mockResolvedValue(fakeCredential) } as unknown as jest.Mocked<AfipCredentialsService>;
     dataSource = createFakeDataSource();
-    invoiceRepo = { findOneBy: jest.fn() };
+    invoiceRepo = { findOneBy: jest.fn(), delete: jest.fn() };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -206,6 +206,49 @@ describe('InvoicesService', () => {
       credentialsService.get.mockResolvedValue(null);
 
       await expect(service.getPdfBuffer('user-1', 'inv-1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('remove', () => {
+    it('borra una factura de prueba (testing) aunque esté emitida', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue({
+        id: 'inv-1',
+        userId: 'user-1',
+        environment: 'testing',
+        status: InvoiceStatus.ISSUED,
+      } as Invoice);
+
+      await expect(service.remove('user-1', 'inv-1')).resolves.toEqual({ deleted: true });
+      expect(invoiceRepo.delete).toHaveBeenCalledWith({ id: 'inv-1', userId: 'user-1' });
+    });
+
+    it('borra una factura rechazada (failed) aunque sea de producción', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue({
+        id: 'inv-1',
+        userId: 'user-1',
+        environment: 'production',
+        status: InvoiceStatus.FAILED,
+      } as Invoice);
+
+      await expect(service.remove('user-1', 'inv-1')).resolves.toEqual({ deleted: true });
+    });
+
+    it('no deja borrar una factura real ya emitida (production + issued)', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue({
+        id: 'inv-1',
+        userId: 'user-1',
+        environment: 'production',
+        status: InvoiceStatus.ISSUED,
+      } as Invoice);
+
+      await expect(service.remove('user-1', 'inv-1')).rejects.toThrow(ForbiddenException);
+      expect(invoiceRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it('404 si la factura no existe o no es del usuario', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue(null);
+
+      await expect(service.remove('user-1', 'inv-x')).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
@@ -132,6 +132,21 @@ export class InvoicesService {
 
   findForUser(userId: string) {
     return this.invoiceRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  }
+
+  // borra solo lo que se puede borrar sin perder un registro fiscal real: facturas
+  // de prueba (testing, sin validez fiscal) o que ARCA rechazó (sin CAE). Una factura
+  // real ya emitida (production + issued) nunca se borra del historial.
+  async remove(userId: string, invoiceId: string) {
+    const invoice = await this.invoiceRepo.findOneBy({ id: invoiceId, userId });
+    if (!invoice) {
+      throw new NotFoundException('factura no encontrada');
+    }
+    if (invoice.environment === 'production' && invoice.status === InvoiceStatus.ISSUED) {
+      throw new ForbiddenException('no se puede borrar una factura real ya emitida');
+    }
+    await this.invoiceRepo.delete({ id: invoiceId, userId });
+    return { deleted: true };
   }
 
   // trae el PDF al servidor y lo devuelve como buffer en vez de redirigir al link de
