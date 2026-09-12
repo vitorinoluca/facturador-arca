@@ -3,6 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+// TypeORM carga el driver de postgres con un require() dinámico (PlatformTools.load),
+// invisible para el file tracer de Vercel — sin este import estático, la función
+// serverless se deployaba sin node_modules/pg y tiraba DriverPackageNotInstalledError.
+import 'pg';
 import { AfipCredentialsModule } from './afip-credentials/afip-credentials.module';
 import { AfipCredential } from './afip-credentials/entities/afip-credential.entity';
 import { AuthModule } from './auth/auth.module';
