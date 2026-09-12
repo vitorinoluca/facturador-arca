@@ -28,8 +28,12 @@ export class MailService {
       const detail = await res.text().catch(() => '');
       // no relanzar como error del request del usuario: si Resend está caído, el
       // registro/reset ya se guardó en la base, no tiene sentido devolver 500 por
-      // esto — se loguea para poder investigarlo.
-      this.logger.error(`Resend rechazó el envío a ${to} (${res.status}): ${detail}`);
+      // esto — se loguea para poder investigarlo. Se incluye el contenido completo
+      // (no solo el error) porque el link ya no se puede recuperar de otra forma —
+      // la base solo guarda el hash del token, nunca el valor real.
+      this.logger.error(
+        `Resend rechazó el envío a ${to} (${res.status}): ${detail}\nContenido que no se pudo mandar:\n${subject}\n${html}`,
+      );
     }
   }
 }

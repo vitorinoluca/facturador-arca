@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
@@ -9,8 +9,16 @@ import { Spinner } from "@/components/spinner";
 
 export default function VerifyEmailPage() {
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  // el token es de un solo uso: React (Strict Mode, en dev) invoca los efectos dos
+  // veces a propósito, y sin este guard el segundo POST cae sobre un token ya
+  // consumido por el primero — si esa respuesta (400) llega después, pisa el "ok"
+  // real con un "venció" falso aunque el mail sí haya quedado verificado.
+  const requested = useRef(false);
 
   useEffect(() => {
+    if (requested.current) return;
+    requested.current = true;
+
     const token = new URLSearchParams(window.location.search).get("token");
     if (!token) {
       setStatus("error");
