@@ -1,4 +1,5 @@
-import serverlessExpress from '@vendia/serverless-express';
+import type { Express } from 'express';
+import type { IncomingMessage, ServerResponse } from 'http';
 // Importa el JS ya compilado por `nest build` (dist/), no el TypeScript fuente:
 // el bundler de funciones de Vercel no procesa bien los decoradores de Nest
 // (emitDecoratorMetadata) si los compila él mismo — este archivo queda liviano
@@ -9,33 +10,24 @@ const { createApp } =
   require('../dist/create-app') as typeof import('../src/create-app');
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// serverless-express no trae tipos propios (es JS puro) y no vale la pena instalar
-// @types/aws-lambda solo para tipar esta firma de shim de integración.
-type ServerlessHandler = (
-  event: unknown,
-  context: unknown,
-  callback: () => void,
-) => unknown;
+// El runtime Node de Vercel invoca la función como un handler HTTP normal
+// (req, res) — no como un evento de AWS Lambda — así que Nest (que por dentro
+// ya es una app Express) se puede exponer tal cual, sin ningún adaptador.
+// Se cachea entre invocaciones "warm" del mismo contenedor (queda undefined
+// solo en un cold start) para no reiniciar Nest en cada request.
+let appPromise: Promise<Express> | undefined;
 
-// Handler serverless de Vercel — se cachea entre invocaciones "warm" del mismo
-// contenedor (server queda undefined solo en un cold start) para no reiniciar Nest
-// en cada request. Vercel usa el mismo formato de evento que AWS Lambda, de ahí
-// serverless-express en vez de un simple app.listen().
-let server: ServerlessHandler | undefined;
-
-async function bootstrapServer(): Promise<ServerlessHandler> {
+async function bootstrapApp(): Promise<Express> {
   const app = await createApp();
   await app.init();
-  // serverless-express no trae tipos — su valor de retorno es `any` para TS.
-  /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment */
-  return serverlessExpress({ app: app.getHttpAdapter().getInstance() });
-  /* eslint-enable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment */
+  return app.getHttpAdapter().getInstance() as Express;
 }
 
 export default async function handler(
-  event: unknown,
-  context: unknown,
-): Promise<unknown> {
-  server = server ?? (await bootstrapServer());
-  return server(event, context, () => {});
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  appPromise ??= bootstrapApp();
+  const expressApp = await appPromise;
+  expressApp(req, res);
 }
