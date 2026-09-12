@@ -13,8 +13,33 @@ export default function LandingPage() {
     void getSession().then((session) => setLoggedIn(!!session));
   }, []);
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        name: "Facturador ARCA",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        description:
+          "Facturá en ARCA sin abrir el portal — Factura C con CAE real para monotributistas.",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "ARS" },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: FAQ_ITEMS.map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: { "@type": "Answer", text: item.a },
+        })),
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-paper">
+      {/* eslint-disable-next-line react/no-danger */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <Nav loggedIn={loggedIn} />
       <Hero loggedIn={loggedIn} />
       <HowItWorks />
@@ -182,25 +207,29 @@ function LedgerPreview() {
   );
 }
 
+// Al nivel de módulo para reusarlo también en el JSON-LD (FAQPage) sin duplicar
+// el texto.
+const FAQ_ITEMS = [
+  {
+    q: "¿Necesito mi propio certificado de ARCA?",
+    a: "No. Delegás la Facturación Electrónica en el CUIT de la app desde el Administrador de Relaciones de Clave Fiscal — dos clicks, sin generar certificados ni compartir claves.",
+  },
+  {
+    q: "¿Es gratis?",
+    a: "Sí, es un proyecto de portfolio sin costo. No hay planes pagos ni límites artificiales.",
+  },
+  {
+    q: "¿Puedo probarlo sin arriesgar nada?",
+    a: "Sí — elegís 'Prueba' en el switch de ambiente al emitir una factura. Son comprobantes de prueba (homologación de ARCA), sin CAE real ni validez fiscal, hasta que decidas pasar a 'Real'.",
+  },
+  {
+    q: "¿Qué pasa si quiero dejar de usarlo?",
+    a: "Revocás la delegación desde ARCA cuando quieras, sin avisarnos. Tus facturas ya emitidas siguen siendo válidas — quedaron registradas en ARCA, no acá.",
+  },
+];
+
 function Faq() {
-  const items = [
-    {
-      q: "¿Necesito mi propio certificado de ARCA?",
-      a: "No. Delegás la Facturación Electrónica en el CUIT de la app desde el Administrador de Relaciones de Clave Fiscal — dos clicks, sin generar certificados ni compartir claves.",
-    },
-    {
-      q: "¿Es gratis?",
-      a: "Sí, es un proyecto de portfolio sin costo. No hay planes pagos ni límites artificiales.",
-    },
-    {
-      q: "¿Puedo probarlo sin arriesgar nada?",
-      a: "Sí — elegís 'Prueba' en el switch de ambiente al emitir una factura. Son comprobantes de prueba (homologación de ARCA), sin CAE real ni validez fiscal, hasta que decidas pasar a 'Real'.",
-    },
-    {
-      q: "¿Qué pasa si quiero dejar de usarlo?",
-      a: "Revocás la delegación desde ARCA cuando quieras, sin avisarnos. Tus facturas ya emitidas siguen siendo válidas — quedaron registradas en ARCA, no acá.",
-    },
-  ];
+  const items = FAQ_ITEMS;
 
   return (
     <section className="border-t border-line bg-surface py-16">

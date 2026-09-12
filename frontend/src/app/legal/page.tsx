@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
+
+export const metadata: Metadata = {
+  title: "Legal",
+  description:
+    "Términos de uso, responsabilidad, y derechos sobre tus datos personales en Facturador ARCA.",
+  alternates: { canonical: "/legal" },
+};
 
 export default function LegalPage() {
   return (
