@@ -50,6 +50,14 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Tailwind resetea <button> a cursor: default — se pierde la señal visual de que
+   es clickeable. Se restaura acá una sola vez para toda la app en vez de agregar
+   cursor-pointer a cada botón/link. */
+a,
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 /* foco de teclado visible y consistente en toda la app */
 a:focus-visible,
 button:focus-visible,
