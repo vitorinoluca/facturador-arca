@@ -70,15 +70,18 @@ describe('InvoicesService', () => {
     clientIvaCondition: 'Consumidor Final' as const,
   };
 
+  let invoiceRepo: { findOneBy: jest.Mock };
+
   beforeEach(async () => {
     afipClient = { emitInvoice: jest.fn(), generatePdf: jest.fn() } as unknown as jest.Mocked<AfipClientService>;
     credentialsService = { get: jest.fn().mockResolvedValue(fakeCredential) } as unknown as jest.Mocked<AfipCredentialsService>;
     dataSource = createFakeDataSource();
+    invoiceRepo = { findOneBy: jest.fn() };
 
     const module = await Test.createTestingModule({
       providers: [
         InvoicesService,
-        { provide: getRepositoryToken(Invoice), useValue: {} },
+        { provide: getRepositoryToken(Invoice), useValue: invoiceRepo },
         { provide: getRepositoryToken(IdempotencyKey), useValue: {} },
         { provide: getDataSourceToken(), useValue: dataSource },
         { provide: AfipCredentialsService, useValue: credentialsService },
@@ -130,5 +133,79 @@ describe('InvoicesService', () => {
     afipClient.emitInvoice.mockRejectedValue(new Error('CUIT inválido'));
 
     await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(BadRequestException);
+  });
+
+  it('guarda el snapshot del emisor al emitir', async () => {
+    afipClient.emitInvoice.mockResolvedValue({ cae: '123', caeExpiration: '2026-12-31', voucherNumber: 1 });
+
+    const invoice = await service.create('user-1', dto, 'key-1');
+
+    expect(invoice).toMatchObject({
+      issuerCuit: fakeCredential.cuit,
+      issuerBusinessName: fakeCredential.businessName,
+      issuerAddress: fakeCredential.address,
+      issuerGrossIncome: fakeCredential.grossIncome,
+      issuerActivityStartDate: fakeCredential.activityStartDate,
+    });
+  });
+
+  describe('getPdfBuffer', () => {
+    const baseInvoice = {
+      id: 'inv-1',
+      userId: 'user-1',
+      credentialId: 'cred-borrada',
+      status: InvoiceStatus.ISSUED,
+      environment: 'production' as const,
+      salesPoint: 1,
+      voucherNumber: 1,
+      amount: '1000',
+      cae: '123',
+      caeExpiration: '2026-12-31',
+      createdAt: new Date('2026-01-01'),
+      clientIvaCondition: 'Consumidor Final' as const,
+      saleCondition: 'Contado',
+      concept: 1 as const,
+    };
+
+    beforeEach(() => {
+      afipClient.generatePdf.mockResolvedValue('https://example.com/factura.pdf');
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(1) });
+    });
+
+    it('usa el snapshot guardado en la factura, sin volver a buscar la credencial', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue({
+        ...baseInvoice,
+        issuerCuit: '20460137749',
+        issuerBusinessName: 'Luca (al momento de emitir)',
+        issuerAddress: 'Domicilio viejo',
+        issuerGrossIncome: 'Exento',
+        issuerActivityStartDate: '2020-01-01',
+      } as Invoice);
+
+      await service.getPdfBuffer('user-1', 'inv-1');
+
+      expect(credentialsService.get).not.toHaveBeenCalled();
+      expect(afipClient.generatePdf).toHaveBeenCalledWith(
+        expect.objectContaining({ businessName: 'Luca (al momento de emitir)', address: 'Domicilio viejo' }),
+      );
+    });
+
+    it('factura vieja sin snapshot: cae a buscar la credencial actual', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue({ ...baseInvoice } as Invoice);
+
+      await service.getPdfBuffer('user-1', 'inv-1');
+
+      expect(credentialsService.get).toHaveBeenCalledWith('user-1', 'cred-borrada');
+      expect(afipClient.generatePdf).toHaveBeenCalledWith(
+        expect.objectContaining({ businessName: fakeCredential.businessName }),
+      );
+    });
+
+    it('factura vieja sin snapshot y credencial ya borrada: 404 (el bug original)', async () => {
+      invoiceRepo.findOneBy.mockResolvedValue({ ...baseInvoice } as Invoice);
+      credentialsService.get.mockResolvedValue(null);
+
+      await expect(service.getPdfBuffer('user-1', 'inv-1')).rejects.toThrow(NotFoundException);
+    });
   });
 });

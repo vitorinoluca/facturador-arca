@@ -81,6 +81,11 @@ export class InvoicesService {
             caeExpiration: result.caeExpiration,
             voucherNumber: result.voucherNumber,
             status: InvoiceStatus.ISSUED,
+            issuerCuit: credential.cuit,
+            issuerBusinessName: credential.businessName,
+            issuerAddress: credential.address,
+            issuerGrossIncome: credential.grossIncome,
+            issuerActivityStartDate: credential.activityStartDate,
           }),
         );
       } catch (err) {
@@ -137,13 +142,25 @@ export class InvoicesService {
     if (!invoice || invoice.status !== InvoiceStatus.ISSUED) {
       throw new NotFoundException('factura no encontrada o no emitida');
     }
-    const credential = await this.credentialsService.get(userId, invoice.credentialId);
-    if (!credential) {
-      throw new NotFoundException('credencial de ARCA no encontrada');
+    // las facturas emitidas antes de guardar este snapshot no lo tienen — para esas
+    // seguimos dependiendo de que la credencial actual siga existiendo.
+    let issuer = {
+      cuit: invoice.issuerCuit,
+      businessName: invoice.issuerBusinessName,
+      address: invoice.issuerAddress,
+      grossIncome: invoice.issuerGrossIncome,
+      activityStartDate: invoice.issuerActivityStartDate,
+    };
+    if (!issuer.cuit) {
+      const credential = await this.credentialsService.get(userId, invoice.credentialId);
+      if (!credential) {
+        throw new NotFoundException('credencial de ARCA no encontrada');
+      }
+      issuer = credential;
     }
 
     const url = await this.afipClient.generatePdf({
-      cuit: credential.cuit,
+      cuit: issuer.cuit!,
       environment: invoice.environment,
       salesPoint: invoice.salesPoint,
       voucherNumber: invoice.voucherNumber!,
@@ -159,10 +176,10 @@ export class InvoicesService {
       serviceDateFrom: invoice.serviceDateFrom,
       serviceDateTo: invoice.serviceDateTo,
       paymentDueDate: invoice.paymentDueDate,
-      businessName: credential.businessName,
-      address: credential.address,
-      grossIncome: credential.grossIncome,
-      activityStartDate: credential.activityStartDate,
+      businessName: issuer.businessName!,
+      address: issuer.address!,
+      grossIncome: issuer.grossIncome!,
+      activityStartDate: issuer.activityStartDate!,
     });
 
     const response = await fetch(url);
