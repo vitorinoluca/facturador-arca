@@ -86,7 +86,7 @@ describe('AuthService', () => {
 
       await service.register('a@a.com', 'password123');
 
-      expect(mailService.send).toHaveBeenCalledWith('a@a.com', expect.stringContaining('Confirmá'), expect.any(String));
+      expect(mailService.send).toHaveBeenCalledWith('a@a.com', expect.stringContaining('Confirmá'), expect.any(String), expect.any(String));
     });
   });
 
@@ -149,7 +149,7 @@ describe('AuthService', () => {
 
       await service.forgotPassword('a@a.com');
 
-      expect(mailService.send).toHaveBeenCalledWith('a@a.com', expect.stringContaining('Recuperar'), expect.any(String));
+      expect(mailService.send).toHaveBeenCalledWith('a@a.com', expect.stringContaining('Recuperar'), expect.any(String), expect.any(String));
     });
   });
 

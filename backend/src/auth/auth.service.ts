@@ -124,6 +124,7 @@ export class AuthService {
       email,
       'Confirmá tu email — Facturador ARCA',
       `<p>Confirmá tu cuenta haciendo click acá:</p><p><a href="${link}">${link}</a></p><p>El link vence en 24 horas.</p>`,
+      `Confirmá tu cuenta entrando a este link:\n${link}\n\nEl link vence en 24 horas.`,
     );
   }
 
@@ -149,6 +150,7 @@ export class AuthService {
       email,
       'Recuperar contraseña — Facturador ARCA',
       `<p>Elegí una contraseña nueva acá:</p><p><a href="${link}">${link}</a></p><p>El link vence en 1 hora. Si no pediste esto, ignorá el mail.</p>`,
+      `Elegí una contraseña nueva entrando a este link:\n${link}\n\nEl link vence en 1 hora. Si no pediste esto, ignorá el mail.`,
     );
   }
 
