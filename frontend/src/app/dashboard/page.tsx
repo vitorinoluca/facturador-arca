@@ -408,7 +408,7 @@ function Guide() {
             <strong>A/B/M de puntos de venta / emisión</strong>.
           </li>
           <li>
-            Hacé click en <strong>Agregar..</strong> — se abre el formulario{" "}
+            Hacé click en <strong>Agregar</strong> — se abre el formulario{" "}
             <strong>Alta de Punto de Venta / Emisión</strong>.
           </li>
           <li>
@@ -416,7 +416,7 @@ function Guide() {
           </li>
           <li>
             <strong>Sistema</strong>: cambiá lo que viene tildado por defecto (CAEA) por{" "}
-            <strong>Facturación Electrónica - Monotributo - Webservice</strong>.
+            <strong>Facturación Electrónica - Monotributo - Web Services</strong>.
           </li>
           <li>
             <strong>Nuevo domicilio</strong>: elegí tu domicilio fiscal de la lista.
