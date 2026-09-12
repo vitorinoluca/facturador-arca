@@ -104,7 +104,7 @@ export default function DashboardPage() {
         ) : (
           <>
             <HelpStrip />
-            <QuickEntryRow credential={credential} onCreated={loadAll} />
+            <QuickEntryRow credential={credential} emailVerified={emailVerified} onCreated={loadAll} />
             <Ledger invoices={invoices} onDeleted={loadAll} />
           </>
         )}
@@ -134,7 +134,7 @@ function VerifyEmailBanner() {
 
   return (
     <div className="mb-6 flex items-center justify-between gap-3 border border-line bg-paper px-4 py-2 text-sm text-ink-muted">
-      <span>Confirmá tu email para asegurar el acceso a tu cuenta.</span>
+      <span>Confirmá tu email para poder emitir facturas (reales o de prueba).</span>
       {sent ? (
         <span className="text-xs text-status-issued">Mail reenviado</span>
       ) : (
@@ -566,7 +566,15 @@ function EnvironmentSwitch({
 
 /* ---------- quick entry (emitir factura, estilo boleta) ---------- */
 
-function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCreated: () => void }) {
+function QuickEntryRow({
+  credential,
+  emailVerified,
+  onCreated,
+}: {
+  credential: Credential;
+  emailVerified: boolean;
+  onCreated: () => void;
+}) {
   const [environment, setEnvironment] = useState<"testing" | "production">("testing");
   const [salesPoint, setSalesPoint] = useState("1");
   const [amount, setAmount] = useState("");
@@ -753,7 +761,12 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           </Field>
           <div>
             <span className="mb-1 block text-xs font-medium text-transparent select-none">Emitir</span>
-            <button type="submit" disabled={loading} className={`${primaryButtonClass} w-full`}>
+            <button
+              type="submit"
+              disabled={loading || !emailVerified}
+              title={emailVerified ? undefined : "Confirmá tu email antes de emitir"}
+              className={`${primaryButtonClass} w-full`}
+            >
               {loading ? (
                 <span className="inline-flex items-center gap-1.5">
                   <Spinner /> Emitiendo...

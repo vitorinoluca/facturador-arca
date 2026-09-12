@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
 import { AfipClientService } from '../afip/afip-client.service';
+import { AuthService } from '../auth/auth.service';
 import { InvoicesService } from './invoices.service';
 import { IdempotencyKey } from './entities/idempotency-key.entity';
 import { Invoice, InvoiceStatus } from './entities/invoice.entity';
@@ -51,6 +52,7 @@ describe('InvoicesService', () => {
   let service: InvoicesService;
   let afipClient: jest.Mocked<AfipClientService>;
   let credentialsService: jest.Mocked<AfipCredentialsService>;
+  let authService: jest.Mocked<AuthService>;
   let dataSource: { createQueryRunner: jest.Mock };
 
   const fakeCredential = {
@@ -75,6 +77,7 @@ describe('InvoicesService', () => {
   beforeEach(async () => {
     afipClient = { emitInvoice: jest.fn(), generatePdf: jest.fn() } as unknown as jest.Mocked<AfipClientService>;
     credentialsService = { get: jest.fn().mockResolvedValue(fakeCredential) } as unknown as jest.Mocked<AfipCredentialsService>;
+    authService = { getProfile: jest.fn().mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: true }) } as unknown as jest.Mocked<AuthService>;
     dataSource = createFakeDataSource();
     invoiceRepo = { findOneBy: jest.fn(), delete: jest.fn() };
 
@@ -86,6 +89,7 @@ describe('InvoicesService', () => {
         { provide: getDataSourceToken(), useValue: dataSource },
         { provide: AfipCredentialsService, useValue: credentialsService },
         { provide: AfipClientService, useValue: afipClient },
+        { provide: AuthService, useValue: authService },
       ],
     }).compile();
 
@@ -99,6 +103,12 @@ describe('InvoicesService', () => {
   it('rechaza si la credencial no existe', async () => {
     credentialsService.get.mockResolvedValue(null);
     await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(NotFoundException);
+  });
+
+  it('rechaza emitir (real o de prueba) si el email no está verificado', async () => {
+    authService.getProfile.mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: false });
+    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(ForbiddenException);
+    expect(afipClient.emitInvoice).not.toHaveBeenCalled();
   });
 
   it('emite normalmente y guarda la factura como issued', async () => {

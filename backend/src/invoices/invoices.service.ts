@@ -3,6 +3,7 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
 import { AfipClientService } from '../afip/afip-client.service';
+import { AuthService } from '../auth/auth.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { IdempotencyKey } from './entities/idempotency-key.entity';
 import { Invoice, InvoiceStatus } from './entities/invoice.entity';
@@ -14,11 +15,19 @@ export class InvoicesService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly credentialsService: AfipCredentialsService,
     private readonly afipClient: AfipClientService,
+    private readonly authService: AuthService,
   ) {}
 
   async create(userId: string, dto: CreateInvoiceDto, idempotencyKey: string) {
     if (!idempotencyKey) {
       throw new BadRequestException('el header Idempotency-Key es obligatorio');
+    }
+
+    // sin email verificado no se emite nada — ni de prueba ni real — para
+    // asegurarnos de que hay una casilla real detrás de cada comprobante.
+    const profile = await this.authService.getProfile(userId);
+    if (!profile.emailVerified) {
+      throw new ForbiddenException('confirmá tu email antes de emitir facturas');
     }
 
     const credential = await this.credentialsService.get(userId, dto.credentialId);
