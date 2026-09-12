@@ -52,16 +52,7 @@ export default function LoginPage() {
           <p className="mt-1 text-xs text-ink-muted">Iniciá sesión para emitir</p>
         </div>
 
-        <div className="space-y-3 px-8 pt-6">
-          <GoogleButton />
-          <div className="flex items-center gap-3 text-xs text-ink-faint">
-            <div className="h-px flex-1 bg-line" />
-            o con tu email
-            <div className="h-px flex-1 bg-line" />
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3 px-8 pb-6 pt-3">
+        <form onSubmit={handleSubmit} className="space-y-3 px-8 pt-6">
           <input
             type="email"
             placeholder="Email"
@@ -90,13 +81,22 @@ export default function LoginPage() {
               "Entrar"
             )}
           </button>
+        </form>
+
+        <div className="space-y-3 px-8 pb-6 pt-3">
+          <div className="flex items-center gap-3 text-xs text-ink-faint">
+            <div className="h-px flex-1 bg-line" />
+            o
+            <div className="h-px flex-1 bg-line" />
+          </div>
+          <GoogleButton />
           <p className="text-sm text-ink-muted">
             ¿No tenés cuenta?{" "}
             <Link href="/register" className="font-medium text-accent underline">
               Registrate
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </main>
     <Footer />
