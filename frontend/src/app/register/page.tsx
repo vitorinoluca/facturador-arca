@@ -133,7 +133,7 @@ export default function RegisterPage() {
                 <div className="h-px flex-1 bg-line" />
               </div>
               <GoogleButton />
-              <p className="text-sm text-ink-muted">
+              <p className="text-center text-sm text-ink-muted">
                 ¿Ya tenés cuenta?{" "}
                 <Link href="/login" className="font-medium text-accent underline">
                   Iniciá sesión
