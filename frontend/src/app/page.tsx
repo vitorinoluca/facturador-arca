@@ -64,6 +64,7 @@ function Hero({ loggedIn }: { loggedIn: boolean }) {
         Delegá la facturación electrónica en dos clicks, sin certificados de tu parte. Después,
         emitir una Factura C con CAE real es un formulario de tres campos.
       </p>
+      <p className="mt-2 text-sm font-medium text-accent">Gratis — sin planes pagos</p>
       <div className="mt-8 flex justify-center gap-3">
         <Link
           href={loggedIn ? "/dashboard" : "/register"}
@@ -79,18 +80,6 @@ function Hero({ loggedIn }: { loggedIn: boolean }) {
           Ver el código
         </a>
       </div>
-      <a
-        href="https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml"
-        target="_blank"
-        className="mt-6 inline-block"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml/badge.svg"
-          alt="Estado del CI"
-          className="h-5"
-        />
-      </a>
     </section>
   );
 }
@@ -257,6 +246,9 @@ function Security() {
           </div>
         ))}
       </div>
+      <Link href="/legal" className="mt-6 inline-block text-sm font-medium text-accent hover:underline">
+        Ver términos legales
+      </Link>
     </section>
   );
 }

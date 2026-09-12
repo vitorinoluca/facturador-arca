@@ -18,8 +18,18 @@ export function Footer() {
           <Link href="/legal" className="hover:text-ink">
             Legal
           </Link>
-          <a href="https://github.com/vitorinoluca/facturador-arca" target="_blank" className="hover:text-ink">
+          <a
+            href="https://github.com/vitorinoluca/facturador-arca"
+            target="_blank"
+            className="flex items-center gap-1.5 hover:text-ink"
+          >
             GitHub
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://github.com/vitorinoluca/facturador-arca/actions/workflows/ci.yml/badge.svg"
+              alt="Estado del CI"
+              className="h-4"
+            />
           </a>
         </div>
       </div>
