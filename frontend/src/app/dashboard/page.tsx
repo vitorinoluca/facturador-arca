@@ -7,6 +7,7 @@ import { api, apiBlob, getSession, logout } from "@/lib/api";
 import { isValidCuit } from "@/lib/is-valid-cuit";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
+import { Spinner } from "@/components/spinner";
 
 type Credential = { id: string; cuit: string; environment: "testing" | "production"; businessName: string };
 type Invoice = {
@@ -80,7 +81,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-paper">
+    <div className="flex min-h-screen flex-col bg-paper">
       <Masthead credential={credential} onLogout={handleLogout} onDeleteCredential={handleDeleteCredential} />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
@@ -90,7 +91,11 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {credentials === null ? null : credential === null ? (
+        {credentials === null ? (
+          <div className="flex min-h-[40vh] items-center justify-center text-ink-faint">
+            <Spinner className="h-6 w-6" />
+          </div>
+        ) : credential === null ? (
           <CredentialOnboarding onCreated={loadAll} />
         ) : (
           <>
@@ -307,7 +312,13 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
             disabled={checkingDelegation}
             className={primaryButtonClass}
           >
-            {checkingDelegation ? "Verificando..." : "Verificar delegación"}
+            {checkingDelegation ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Spinner /> Verificando...
+              </span>
+            ) : (
+              "Verificar delegación"
+            )}
           </button>
         )}
 
@@ -371,7 +382,13 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
 
         {delegationOk && (
           <button type="submit" disabled={loading} className={primaryButtonClass}>
-            {loading ? "Guardando..." : "Guardar credencial"}
+            {loading ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Spinner /> Guardando...
+              </span>
+            ) : (
+              "Guardar credencial"
+            )}
           </button>
         )}
       </form>
@@ -698,7 +715,13 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
           <div>
             <span className="mb-1 block text-xs font-medium text-transparent select-none">Emitir</span>
             <button type="submit" disabled={loading} className={`${primaryButtonClass} w-full`}>
-              {loading ? "Emitiendo..." : "Emitir"}
+              {loading ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Spinner /> Emitiendo...
+                </span>
+              ) : (
+                "Emitir"
+              )}
             </button>
           </div>
         </div>
@@ -862,7 +885,12 @@ function PdfLink({ invoiceId }: { invoiceId: string }) {
   }
 
   return (
-    <button onClick={handleClick} disabled={loading} className="text-xs font-medium text-accent underline disabled:opacity-50">
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="inline-flex items-center gap-1 text-xs font-medium text-accent underline disabled:opacity-50"
+    >
+      {loading && <Spinner className="h-3 w-3" />}
       {loading ? "generando..." : "ver PDF"}
     </button>
   );
@@ -885,7 +913,12 @@ function DeleteInvoiceButton({ invoiceId, onDeleted }: { invoiceId: string; onDe
   }
 
   return (
-    <button onClick={handleClick} disabled={loading} className="text-xs font-medium text-status-failed underline disabled:opacity-50">
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="inline-flex items-center gap-1 text-xs font-medium text-status-failed underline disabled:opacity-50"
+    >
+      {loading && <Spinner className="h-3 w-3" />}
       {loading ? "borrando..." : "borrar"}
     </button>
   );

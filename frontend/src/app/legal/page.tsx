@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer";
 
 export default function LegalPage() {
   return (
-    <div className="min-h-full bg-paper">
+    <div className="min-h-screen bg-paper">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-6 py-4">
           <SealMark className="h-6 w-6 text-accent" />

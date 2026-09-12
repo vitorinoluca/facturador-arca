@@ -14,7 +14,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-full bg-paper">
+    <div className="min-h-screen bg-paper">
       <Nav loggedIn={loggedIn} />
       <Hero loggedIn={loggedIn} />
       <HowItWorks />

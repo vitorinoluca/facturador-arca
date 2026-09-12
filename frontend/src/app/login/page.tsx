@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
+import { Spinner } from "@/components/spinner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,7 +64,13 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full border border-accent bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Spinner /> Entrando...
+              </span>
+            ) : (
+              "Entrar"
+            )}
           </button>
           <p className="text-sm text-ink-muted">
             ¿No tenés cuenta?{" "}

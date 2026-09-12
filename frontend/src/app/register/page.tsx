@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
+import { Spinner } from "@/components/spinner";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -64,7 +65,13 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full border border-accent bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
-            {loading ? "Creando..." : "Crear cuenta"}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Spinner /> Creando...
+              </span>
+            ) : (
+              "Crear cuenta"
+            )}
           </button>
           <p className="text-sm text-ink-muted">
             ¿Ya tenés cuenta?{" "}
