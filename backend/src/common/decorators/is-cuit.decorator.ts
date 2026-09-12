@@ -8,7 +8,10 @@ export function IsCuit(validationOptions?: ValidationOptions) {
       name: 'isCuit',
       target: object.constructor,
       propertyName,
-      options: { message: 'cuit inválido (dígito verificador no coincide)', ...validationOptions },
+      options: {
+        message: 'cuit inválido (dígito verificador no coincide)',
+        ...validationOptions,
+      },
       validator: {
         validate(value: unknown) {
           return typeof value === 'string' && isValidCuit(value);

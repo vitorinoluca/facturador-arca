@@ -27,17 +27,28 @@ export function formatDateStringDDMMYYYY(yyyyMmDd: string): string {
 // Testing y producción usan certificados DISTINTOS (ARCA no confía el mismo
 // certificado en los dos ambientes), así que hay un par de variables por ambiente.
 function getAppCertificate(environment: 'testing' | 'production') {
-  const prefix = environment === 'production' ? 'AFIP_APP_CERT_PRODUCTION' : 'AFIP_APP_CERT_TESTING';
-  const keyPrefix = environment === 'production' ? 'AFIP_APP_KEY_PRODUCTION' : 'AFIP_APP_KEY_TESTING';
+  const prefix =
+    environment === 'production'
+      ? 'AFIP_APP_CERT_PRODUCTION'
+      : 'AFIP_APP_CERT_TESTING';
+  const keyPrefix =
+    environment === 'production'
+      ? 'AFIP_APP_KEY_PRODUCTION'
+      : 'AFIP_APP_KEY_TESTING';
   const cert = process.env[prefix]?.replace(/\\n/g, '\n');
   const key = process.env[keyPrefix]?.replace(/\\n/g, '\n');
   if (!cert || !key) {
-    throw new Error(`${prefix} / ${keyPrefix} no están configurados en el servidor`);
+    throw new Error(
+      `${prefix} / ${keyPrefix} no están configurados en el servidor`,
+    );
   }
   return { cert, key };
 }
 
-function buildAfipClient(creds: { cuit: string; environment: 'testing' | 'production' }) {
+function buildAfipClient(creds: {
+  cuit: string;
+  environment: 'testing' | 'production';
+}) {
   const { cert, key } = getAppCertificate(creds.environment);
   return new Afip({
     CUIT: creds.cuit,
@@ -128,8 +139,13 @@ export class AfipClientService {
     // si Concepto es 2 o 3) — sin esto rechaza el comprobante. Se valida antes de
     // instanciar el cliente para no depender del certificado en este chequeo.
     const isService = input.concept === 2 || input.concept === 3;
-    if (isService && (!input.serviceDateFrom || !input.serviceDateTo || !input.paymentDueDate)) {
-      throw new Error('Servicios requiere período facturado (desde/hasta) y fecha de vencimiento de pago');
+    if (
+      isService &&
+      (!input.serviceDateFrom || !input.serviceDateTo || !input.paymentDueDate)
+    ) {
+      throw new Error(
+        'Servicios requiere período facturado (desde/hasta) y fecha de vencimiento de pago',
+      );
     }
 
     const afip = buildAfipClient(input);
@@ -196,19 +212,31 @@ export class AfipClientService {
             issuer_address: input.address,
             issuer_iva_condition: 'Responsable Monotributo',
             issuer_gross_income: input.grossIncome,
-            issuer_activity_start_date: formatDateStringDDMMYYYY(input.activityStartDate),
-            receiver_name: hasClientCuit ? `CUIT ${input.clientCuit}` : 'CONSUMIDOR FINAL',
+            issuer_activity_start_date: formatDateStringDDMMYYYY(
+              input.activityStartDate,
+            ),
+            receiver_name: hasClientCuit
+              ? `CUIT ${input.clientCuit}`
+              : 'CONSUMIDOR FINAL',
             receiver_address: '-',
             receiver_document_type: hasClientCuit ? 80 : 99,
-            receiver_document_number: hasClientCuit ? Number(input.clientCuit) : 0,
+            receiver_document_number: hasClientCuit
+              ? Number(input.clientCuit)
+              : 0,
             receiver_iva_condition: input.clientIvaCondition,
             sale_condition: input.saleCondition,
             currency_id: 'ARS',
             currency_rate: 1,
             concept: input.concept,
-            ...(input.serviceDateFrom && { billing_from: formatDateStringDDMMYYYY(input.serviceDateFrom) }),
-            ...(input.serviceDateTo && { billing_to: formatDateStringDDMMYYYY(input.serviceDateTo) }),
-            ...(input.paymentDueDate && { payment_due_date: formatDateStringDDMMYYYY(input.paymentDueDate) }),
+            ...(input.serviceDateFrom && {
+              billing_from: formatDateStringDDMMYYYY(input.serviceDateFrom),
+            }),
+            ...(input.serviceDateTo && {
+              billing_to: formatDateStringDDMMYYYY(input.serviceDateTo),
+            }),
+            ...(input.paymentDueDate && {
+              payment_due_date: formatDateStringDDMMYYYY(input.paymentDueDate),
+            }),
             items: [
               {
                 code: '001',
@@ -240,7 +268,10 @@ export class AfipClientService {
   // ARCA (autorización separada de wsfe). Verificado contra el servicio real: la
   // respuesta NO trae fecha de inicio de actividades a este nivel — ese campo sigue
   // siendo manual.
-  async lookupTaxpayer(cuit: string, environment: 'testing' | 'production'): Promise<TaxpayerLookupResult | null> {
+  async lookupTaxpayer(
+    cuit: string,
+    environment: 'testing' | 'production',
+  ): Promise<TaxpayerLookupResult | null> {
     const appCuit = process.env.AFIP_APP_CUIT;
     if (!appCuit) {
       throw new Error('AFIP_APP_CUIT no está configurado en el servidor');
@@ -249,25 +280,40 @@ export class AfipClientService {
 
     let details: unknown;
     try {
-      details = await afip.RegisterInscriptionProof.getTaxpayerDetails(Number(cuit));
+      details = await afip.RegisterInscriptionProof.getTaxpayerDetails(
+        Number(cuit),
+      );
     } catch (err) {
       throw new Error(extractErrorDetail(err));
     }
     if (!details) return null;
 
-    const persona = (details as { datosGenerales?: Record<string, unknown> }).datosGenerales ?? details;
+    const persona =
+      (details as { datosGenerales?: Record<string, unknown> })
+        .datosGenerales ?? details;
     const p = persona as Record<string, unknown>;
 
     const businessName =
-      (p.razonSocial as string) ?? [p.nombre, p.apellido].filter(Boolean).join(' ').trim() ?? '';
+      (p.razonSocial as string) ??
+      [p.nombre, p.apellido].filter(Boolean).join(' ').trim() ??
+      '';
 
     const domicilio = (p.domicilioFiscal ?? {}) as Record<string, unknown>;
-    const address = [domicilio.direccion, domicilio.localidad, domicilio.descripcionProvincia]
+    const address = [
+      domicilio.direccion,
+      domicilio.localidad,
+      domicilio.descripcionProvincia,
+    ]
       .filter(Boolean)
       .join(', ');
 
-    const fechaInicio = (p.fechaInicioActividad as string) ?? (p.fechaInscripcion as string) ?? undefined;
-    const activityStartDate = fechaInicio ? fechaInicio.slice(0, 10) : undefined;
+    const fechaInicio =
+      (p.fechaInicioActividad as string) ??
+      (p.fechaInscripcion as string) ??
+      undefined;
+    const activityStartDate = fechaInicio
+      ? fechaInicio.slice(0, 10)
+      : undefined;
 
     return { businessName, address, activityStartDate };
   }
@@ -277,7 +323,10 @@ export class AfipClientService {
   // ponytail: no valida si además creó un punto de venta — ese dato no se puede
   // confirmar por acá (FEParamGetPtosVenta devuelve "sin resultados" incluso con
   // puntos de venta ya usados en facturas reales, no es una señal confiable).
-  async checkDelegation(cuit: string, environment: 'testing' | 'production'): Promise<{ delegated: boolean; detail?: string }> {
+  async checkDelegation(
+    cuit: string,
+    environment: 'testing' | 'production',
+  ): Promise<{ delegated: boolean; detail?: string }> {
     const afip = buildAfipClient({ cuit, environment });
     try {
       await afip.ElectronicBilling.getSalesPoints();

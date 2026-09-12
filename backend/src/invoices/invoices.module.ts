@@ -9,7 +9,11 @@ import { InvoicesController } from './invoices.controller';
 import { InvoicesService } from './invoices.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Invoice, IdempotencyKey]), AfipCredentialsModule, AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Invoice, IdempotencyKey]),
+    AfipCredentialsModule,
+    AuthModule,
+  ],
   controllers: [InvoicesController],
   providers: [InvoicesService, AfipClientService],
 })

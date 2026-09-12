@@ -1,4 +1,14 @@
-import { IsDateString, IsIn, IsNumber, IsOptional, IsPositive, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 import { CLIENT_IVA_CONDITIONS } from '../../afip/afip-client.service';
 import type { ClientIvaCondition } from '../../afip/afip-client.service';
 import { IsCuit } from '../../common/decorators/is-cuit.decorator';
@@ -25,7 +35,9 @@ export class CreateInvoiceDto {
 
   // obligatorio salvo Consumidor Final (el resto de las condiciones de IVA
   // requieren identificar al receptor ante ARCA)
-  @ValidateIf((dto: CreateInvoiceDto) => dto.clientIvaCondition !== 'Consumidor Final')
+  @ValidateIf(
+    (dto: CreateInvoiceDto) => dto.clientIvaCondition !== 'Consumidor Final',
+  )
   @IsString()
   @IsCuit()
   clientCuit?: string;
@@ -38,7 +50,13 @@ export class CreateInvoiceDto {
   // solo texto del PDF (no lo valida WSFEv1), pero condiciona lo que ARCA espera ver
   // impreso en el comprobante
   @IsOptional()
-  @IsIn(['Contado', 'Cuenta Corriente', 'Tarjeta de Crédito', 'Tarjeta de Débito', 'Cheque'])
+  @IsIn([
+    'Contado',
+    'Cuenta Corriente',
+    'Tarjeta de Crédito',
+    'Tarjeta de Débito',
+    'Cheque',
+  ])
   saleCondition?: string;
 
   // 1 = Productos, 2 = Servicios, 3 = Productos y Servicios (códigos WSFEv1).

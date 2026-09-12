@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Request } from 'express';
@@ -19,13 +24,17 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const token = (request.cookies as Record<string, string> | undefined)?.access_token;
+    const token = (request.cookies as Record<string, string> | undefined)
+      ?.access_token;
     if (!token) {
       throw new UnauthorizedException('falta el token de autenticación');
     }
     let payload: { sub: string; email: string };
     try {
-      payload = await this.jwtService.verifyAsync<{ sub: string; email: string }>(token);
+      payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        email: string;
+      }>(token);
     } catch {
       throw new UnauthorizedException('token inválido o expirado');
     }
@@ -36,7 +45,10 @@ export class JwtAuthGuard implements CanActivate {
     if (!exists) {
       throw new UnauthorizedException('usuario no encontrado');
     }
-    (request as Request & { user: AuthenticatedUser }).user = { id: payload.sub, email: payload.email };
+    (request as Request & { user: AuthenticatedUser }).user = {
+      id: payload.sub,
+      email: payload.email,
+    };
     return true;
   }
 }

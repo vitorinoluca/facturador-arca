@@ -49,9 +49,13 @@ export class GoogleOAuthService {
       }),
     });
     if (!tokenRes.ok) {
-      throw new UnauthorizedException('Google rechazó el código de autorización');
+      throw new UnauthorizedException(
+        'Google rechazó el código de autorización',
+      );
     }
-    const { access_token: accessToken } = (await tokenRes.json()) as { access_token: string };
+    const { access_token: accessToken } = (await tokenRes.json()) as {
+      access_token: string;
+    };
 
     const profileRes = await fetch(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -59,8 +63,16 @@ export class GoogleOAuthService {
     if (!profileRes.ok) {
       throw new UnauthorizedException('no se pudo obtener el perfil de Google');
     }
-    const profile = (await profileRes.json()) as { sub: string; email: string; email_verified: boolean };
+    const profile = (await profileRes.json()) as {
+      sub: string;
+      email: string;
+      email_verified: boolean;
+    };
 
-    return { googleId: profile.sub, email: profile.email, emailVerified: profile.email_verified };
+    return {
+      googleId: profile.sub,
+      email: profile.email,
+      emailVerified: profile.email_verified,
+    };
   }
 }

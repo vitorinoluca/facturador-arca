@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -35,7 +39,13 @@ describe('AfipCredentialsService', () => {
         },
         {
           provide: AuthService,
-          useValue: { getProfile: jest.fn().mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: true }) },
+          useValue: {
+            getProfile: jest.fn().mockResolvedValue({
+              id: 'user-1',
+              email: 'a@a.com',
+              emailVerified: true,
+            }),
+          },
         },
       ],
     }).compile();
@@ -47,19 +57,29 @@ describe('AfipCredentialsService', () => {
 
   describe('create', () => {
     it('rechaza si el email no está verificado', async () => {
-      authService.getProfile.mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: false });
-      await expect(service.create('user-1', dto)).rejects.toThrow(ForbiddenException);
+      authService.getProfile.mockResolvedValue({
+        id: 'user-1',
+        email: 'a@a.com',
+        emailVerified: false,
+      });
+      await expect(service.create('user-1', dto)).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(repo.save).not.toHaveBeenCalled();
     });
 
     it('rechaza si el usuario ya tiene una credencial', async () => {
       repo.findOneBy.mockResolvedValue({ id: 'existing' } as AfipCredential);
-      await expect(service.create('user-1', dto)).rejects.toThrow(ConflictException);
+      await expect(service.create('user-1', dto)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('usa "Exento" como default de Ingresos Brutos si no se manda', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
+      repo.save.mockImplementation(
+        async (c) => ({ id: 'new', ...c }) as AfipCredential,
+      );
 
       await service.create('user-1', dto);
 
@@ -69,7 +89,9 @@ describe('AfipCredentialsService', () => {
 
     it('siempre crea la credencial en ambiente "production" (el ambiente se elige por factura)', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      repo.save.mockImplementation(async (c) => ({ id: 'new', ...c }) as AfipCredential);
+      repo.save.mockImplementation(
+        async (c) => ({ id: 'new', ...c }) as AfipCredential,
+      );
 
       await service.create('user-1', dto);
 
@@ -81,13 +103,20 @@ describe('AfipCredentialsService', () => {
   describe('remove', () => {
     it('rechaza si no borró ninguna fila (no existe o no es del usuario)', async () => {
       repo.delete.mockResolvedValue({ affected: 0, raw: [] });
-      await expect(service.remove('user-1', 'otra-cred')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('user-1', 'otra-cred')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('borra la credencial del usuario dueño', async () => {
       repo.delete.mockResolvedValue({ affected: 1, raw: [] });
-      await expect(service.remove('user-1', 'cred-1')).resolves.toEqual({ deleted: true });
-      expect(repo.delete).toHaveBeenCalledWith({ id: 'cred-1', userId: 'user-1' });
+      await expect(service.remove('user-1', 'cred-1')).resolves.toEqual({
+        deleted: true,
+      });
+      expect(repo.delete).toHaveBeenCalledWith({
+        id: 'cred-1',
+        userId: 'user-1',
+      });
     });
   });
 
@@ -100,7 +129,10 @@ describe('AfipCredentialsService', () => {
     it('solo devuelve credenciales del usuario dueño', async () => {
       repo.findOneBy.mockResolvedValue(null);
       await service.get('user-1', 'cred-de-otro');
-      expect(repo.findOneBy).toHaveBeenCalledWith({ id: 'cred-de-otro', userId: 'user-1' });
+      expect(repo.findOneBy).toHaveBeenCalledWith({
+        id: 'cred-de-otro',
+        userId: 'user-1',
+      });
     });
   });
 });

@@ -35,7 +35,11 @@ const BRUTE_FORCE_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
 const isProd = process.env.NODE_ENV === 'production';
 // en producción front y back viven en dominios distintos (cross-site) → hace falta
 // SameSite=None + Secure; en local, mismo "site" (localhost:*) alcanza con Lax.
-const cookieBase = { httpOnly: true, secure: isProd, sameSite: isProd ? ('none' as const) : ('lax' as const) };
+const cookieBase = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? ('none' as const) : ('lax' as const),
+};
 const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 
 @ApiTags('auth')
@@ -50,15 +54,27 @@ export class AuthController {
 
   @Throttle(BRUTE_FORCE_THROTTLE)
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    this.setTokenCookies(res, await this.authService.register(dto.email, dto.password));
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    this.setTokenCookies(
+      res,
+      await this.authService.register(dto.email, dto.password),
+    );
   }
 
   @Throttle(BRUTE_FORCE_THROTTLE)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    this.setTokenCookies(res, await this.authService.login(dto.email, dto.password));
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    this.setTokenCookies(
+      res,
+      await this.authService.login(dto.email, dto.password),
+    );
   }
 
   // Paso 1 del login con Google: redirige al consent screen. state es un valor
@@ -68,7 +84,10 @@ export class AuthController {
   @Get('google')
   googleRedirect(@Res() res: Response) {
     const state = randomBytes(16).toString('hex');
-    res.cookie('google_oauth_state', state, { ...cookieBase, maxAge: 10 * 60 * 1000 });
+    res.cookie('google_oauth_state', state, {
+      ...cookieBase,
+      maxAge: 10 * 60 * 1000,
+    });
     res.redirect(this.googleOAuthService.buildAuthUrl(state));
   }
 
@@ -79,13 +98,16 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const expectedState = (req.cookies as Record<string, string> | undefined)?.google_oauth_state;
+    const expectedState = (req.cookies as Record<string, string> | undefined)
+      ?.google_oauth_state;
     res.clearCookie('google_oauth_state', cookieBase);
     if (!code || !state || !expectedState || state !== expectedState) {
       // el motivo típico: se reusó un link/vuelta de "atrás" del navegador después de
       // ya haber completado el login una vez — la cookie de state de esa vez ya se
       // borró (o venció, dura 10 min).
-      this.logger.warn(`google callback con state inválido (code presente: ${!!code})`);
+      this.logger.warn(
+        `google callback con state inválido (code presente: ${!!code})`,
+      );
       return res.redirect(`${frontendUrl}/login?error=google`);
     }
     try {
@@ -108,7 +130,10 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
     // mismo mensaje exista o no la cuenta — no hay que dejar enumerar emails
-    return { message: 'si existe una cuenta con ese email, te mandamos un link para resetear la contraseña' };
+    return {
+      message:
+        'si existe una cuenta con ese email, te mandamos un link para resetear la contraseña',
+    };
   }
 
   @Throttle(BRUTE_FORCE_THROTTLE)
@@ -118,7 +143,9 @@ export class AuthController {
     try {
       await this.authService.resetPassword(dto.token, dto.newPassword);
     } catch {
-      throw new BadRequestException('el link venció o ya se usó — pedí uno nuevo');
+      throw new BadRequestException(
+        'el link venció o ya se usó — pedí uno nuevo',
+      );
     }
   }
 
@@ -143,8 +170,12 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = (req.cookies as Record<string, string> | undefined)?.refresh_token;
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = (req.cookies as Record<string, string> | undefined)
+      ?.refresh_token;
     if (!refreshToken) {
       throw new UnauthorizedException('falta el refresh token');
     }
@@ -154,7 +185,8 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = (req.cookies as Record<string, string> | undefined)?.refresh_token;
+    const refreshToken = (req.cookies as Record<string, string> | undefined)
+      ?.refresh_token;
     if (refreshToken) {
       await this.authService.logout(refreshToken);
     }
@@ -170,7 +202,10 @@ export class AuthController {
   }
 
   private setTokenCookies(res: Response, tokens: TokenPair) {
-    res.cookie('access_token', tokens.accessToken, { ...cookieBase, maxAge: 15 * 60 * 1000 });
+    res.cookie('access_token', tokens.accessToken, {
+      ...cookieBase,
+      maxAge: 15 * 60 * 1000,
+    });
     res.cookie('refresh_token', tokens.refreshToken, {
       ...cookieBase,
       expires: tokens.refreshTokenExpiresAt,

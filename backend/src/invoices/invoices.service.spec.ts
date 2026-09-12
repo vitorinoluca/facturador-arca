@@ -1,4 +1,8 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
@@ -19,13 +23,19 @@ function createFakeDataSource() {
   const manager = {
     getRepository: () => ({
       findOneBy: async ({ key }: { key: string }) =>
-        idempotencyStore.has(key) ? { key, responseBody: idempotencyStore.get(key) } : null,
-      update: async ({ key }: { key: string }, { responseBody }: { responseBody: unknown }) => {
+        idempotencyStore.has(key)
+          ? { key, responseBody: idempotencyStore.get(key) }
+          : null,
+      update: async (
+        { key }: { key: string },
+        { responseBody }: { responseBody: unknown },
+      ) => {
         idempotencyStore.set(key, responseBody);
       },
     }),
     create: (_entity: unknown, data: Record<string, unknown>) => ({ ...data }),
-    save: async (data: Record<string, unknown>) => ({ id: `invoice-${nextId++}`, ...data }) as Invoice,
+    save: async (data: Record<string, unknown>) =>
+      ({ id: `invoice-${nextId++}`, ...data }) as Invoice,
   };
 
   function createQueryRunner() {
@@ -75,9 +85,20 @@ describe('InvoicesService', () => {
   let invoiceRepo: { findOneBy: jest.Mock; delete: jest.Mock };
 
   beforeEach(async () => {
-    afipClient = { emitInvoice: jest.fn(), generatePdf: jest.fn() } as unknown as jest.Mocked<AfipClientService>;
-    credentialsService = { get: jest.fn().mockResolvedValue(fakeCredential) } as unknown as jest.Mocked<AfipCredentialsService>;
-    authService = { getProfile: jest.fn().mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: true }) } as unknown as jest.Mocked<AuthService>;
+    afipClient = {
+      emitInvoice: jest.fn(),
+      generatePdf: jest.fn(),
+    } as unknown as jest.Mocked<AfipClientService>;
+    credentialsService = {
+      get: jest.fn().mockResolvedValue(fakeCredential),
+    } as unknown as jest.Mocked<AfipCredentialsService>;
+    authService = {
+      getProfile: jest.fn().mockResolvedValue({
+        id: 'user-1',
+        email: 'a@a.com',
+        emailVerified: true,
+      }),
+    } as unknown as jest.Mocked<AuthService>;
     dataSource = createFakeDataSource();
     invoiceRepo = { findOneBy: jest.fn(), delete: jest.fn() };
 
@@ -97,22 +118,36 @@ describe('InvoicesService', () => {
   });
 
   it('rechaza sin Idempotency-Key', async () => {
-    await expect(service.create('user-1', dto, '')).rejects.toThrow(BadRequestException);
+    await expect(service.create('user-1', dto, '')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('rechaza si la credencial no existe', async () => {
     credentialsService.get.mockResolvedValue(null);
-    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(NotFoundException);
+    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('rechaza emitir (real o de prueba) si el email no está verificado', async () => {
-    authService.getProfile.mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: false });
-    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(ForbiddenException);
+    authService.getProfile.mockResolvedValue({
+      id: 'user-1',
+      email: 'a@a.com',
+      emailVerified: false,
+    });
+    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(
+      ForbiddenException,
+    );
     expect(afipClient.emitInvoice).not.toHaveBeenCalled();
   });
 
   it('emite normalmente y guarda la factura como issued', async () => {
-    afipClient.emitInvoice.mockResolvedValue({ cae: '123', caeExpiration: '2026-12-31', voucherNumber: 1 });
+    afipClient.emitInvoice.mockResolvedValue({
+      cae: '123',
+      caeExpiration: '2026-12-31',
+      voucherNumber: 1,
+    });
 
     const invoice = await service.create('user-1', dto, 'key-1');
 
@@ -121,7 +156,11 @@ describe('InvoicesService', () => {
   });
 
   it('con la misma Idempotency-Key no vuelve a llamar a ARCA', async () => {
-    afipClient.emitInvoice.mockResolvedValue({ cae: '123', caeExpiration: '2026-12-31', voucherNumber: 1 });
+    afipClient.emitInvoice.mockResolvedValue({
+      cae: '123',
+      caeExpiration: '2026-12-31',
+      voucherNumber: 1,
+    });
 
     const first = await service.create('user-1', dto, 'key-repetida');
     const second = await service.create('user-1', dto, 'key-repetida');
@@ -131,7 +170,11 @@ describe('InvoicesService', () => {
   });
 
   it('con una Idempotency-Key distinta sí emite otra factura', async () => {
-    afipClient.emitInvoice.mockResolvedValue({ cae: '123', caeExpiration: '2026-12-31', voucherNumber: 1 });
+    afipClient.emitInvoice.mockResolvedValue({
+      cae: '123',
+      caeExpiration: '2026-12-31',
+      voucherNumber: 1,
+    });
 
     await service.create('user-1', dto, 'key-a');
     await service.create('user-1', dto, 'key-b');
@@ -142,11 +185,17 @@ describe('InvoicesService', () => {
   it('si ARCA rechaza, guarda la factura como failed y tira BadRequestException', async () => {
     afipClient.emitInvoice.mockRejectedValue(new Error('CUIT inválido'));
 
-    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(BadRequestException);
+    await expect(service.create('user-1', dto, 'key-1')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('guarda el snapshot del emisor al emitir', async () => {
-    afipClient.emitInvoice.mockResolvedValue({ cae: '123', caeExpiration: '2026-12-31', voucherNumber: 1 });
+    afipClient.emitInvoice.mockResolvedValue({
+      cae: '123',
+      caeExpiration: '2026-12-31',
+      voucherNumber: 1,
+    });
 
     const invoice = await service.create('user-1', dto, 'key-1');
 
@@ -178,8 +227,13 @@ describe('InvoicesService', () => {
     };
 
     beforeEach(() => {
-      afipClient.generatePdf.mockResolvedValue('https://example.com/factura.pdf');
-      global.fetch = jest.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(1) });
+      afipClient.generatePdf.mockResolvedValue(
+        'https://example.com/factura.pdf',
+      );
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: async () => new ArrayBuffer(1),
+      });
     });
 
     it('usa el snapshot guardado en la factura, sin volver a buscar la credencial', async () => {
@@ -190,32 +244,40 @@ describe('InvoicesService', () => {
         issuerAddress: 'Domicilio viejo',
         issuerGrossIncome: 'Exento',
         issuerActivityStartDate: '2020-01-01',
-      } as Invoice);
+      });
 
       await service.getPdfBuffer('user-1', 'inv-1');
 
       expect(credentialsService.get).not.toHaveBeenCalled();
       expect(afipClient.generatePdf).toHaveBeenCalledWith(
-        expect.objectContaining({ businessName: 'Luca (al momento de emitir)', address: 'Domicilio viejo' }),
+        expect.objectContaining({
+          businessName: 'Luca (al momento de emitir)',
+          address: 'Domicilio viejo',
+        }),
       );
     });
 
     it('factura vieja sin snapshot: cae a buscar la credencial actual', async () => {
-      invoiceRepo.findOneBy.mockResolvedValue({ ...baseInvoice } as Invoice);
+      invoiceRepo.findOneBy.mockResolvedValue({ ...baseInvoice });
 
       await service.getPdfBuffer('user-1', 'inv-1');
 
-      expect(credentialsService.get).toHaveBeenCalledWith('user-1', 'cred-borrada');
+      expect(credentialsService.get).toHaveBeenCalledWith(
+        'user-1',
+        'cred-borrada',
+      );
       expect(afipClient.generatePdf).toHaveBeenCalledWith(
         expect.objectContaining({ businessName: fakeCredential.businessName }),
       );
     });
 
     it('factura vieja sin snapshot y credencial ya borrada: 404 (el bug original)', async () => {
-      invoiceRepo.findOneBy.mockResolvedValue({ ...baseInvoice } as Invoice);
+      invoiceRepo.findOneBy.mockResolvedValue({ ...baseInvoice });
       credentialsService.get.mockResolvedValue(null);
 
-      await expect(service.getPdfBuffer('user-1', 'inv-1')).rejects.toThrow(NotFoundException);
+      await expect(service.getPdfBuffer('user-1', 'inv-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -226,10 +288,15 @@ describe('InvoicesService', () => {
         userId: 'user-1',
         environment: 'testing',
         status: InvoiceStatus.ISSUED,
-      } as Invoice);
+      });
 
-      await expect(service.remove('user-1', 'inv-1')).resolves.toEqual({ deleted: true });
-      expect(invoiceRepo.delete).toHaveBeenCalledWith({ id: 'inv-1', userId: 'user-1' });
+      await expect(service.remove('user-1', 'inv-1')).resolves.toEqual({
+        deleted: true,
+      });
+      expect(invoiceRepo.delete).toHaveBeenCalledWith({
+        id: 'inv-1',
+        userId: 'user-1',
+      });
     });
 
     it('borra una factura rechazada (failed) aunque sea de producción', async () => {
@@ -238,9 +305,11 @@ describe('InvoicesService', () => {
         userId: 'user-1',
         environment: 'production',
         status: InvoiceStatus.FAILED,
-      } as Invoice);
+      });
 
-      await expect(service.remove('user-1', 'inv-1')).resolves.toEqual({ deleted: true });
+      await expect(service.remove('user-1', 'inv-1')).resolves.toEqual({
+        deleted: true,
+      });
     });
 
     it('no deja borrar una factura real ya emitida (production + issued)', async () => {
@@ -249,16 +318,20 @@ describe('InvoicesService', () => {
         userId: 'user-1',
         environment: 'production',
         status: InvoiceStatus.ISSUED,
-      } as Invoice);
+      });
 
-      await expect(service.remove('user-1', 'inv-1')).rejects.toThrow(ForbiddenException);
+      await expect(service.remove('user-1', 'inv-1')).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(invoiceRepo.delete).not.toHaveBeenCalled();
     });
 
     it('404 si la factura no existe o no es del usuario', async () => {
       invoiceRepo.findOneBy.mockResolvedValue(null);
 
-      await expect(service.remove('user-1', 'inv-x')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('user-1', 'inv-x')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

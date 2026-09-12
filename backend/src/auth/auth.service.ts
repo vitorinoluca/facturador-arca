@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -8,7 +12,10 @@ import { MailService } from '../mail/mail.service';
 import { GoogleProfile } from './google-oauth.service';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User } from './entities/user.entity';
-import { VerificationToken, VerificationTokenPurpose } from './entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenPurpose,
+} from './entities/verification-token.entity';
 
 const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
@@ -28,15 +35,19 @@ function hashToken(token: string): string {
 // FRONTEND_URL puede traer varios orígenes separados por coma (ver main.ts, CORS)
 // — para armar un link de verdad hace falta uno solo, siempre el primero.
 function frontendOrigin(): string {
-  return (process.env.FRONTEND_URL ?? 'http://localhost:3000').split(',')[0].trim();
+  return (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+    .split(',')[0]
+    .trim();
 }
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
-    @InjectRepository(RefreshToken) private readonly refreshTokenRepo: Repository<RefreshToken>,
-    @InjectRepository(VerificationToken) private readonly verificationTokenRepo: Repository<VerificationToken>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepo: Repository<RefreshToken>,
+    @InjectRepository(VerificationToken)
+    private readonly verificationTokenRepo: Repository<VerificationToken>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
@@ -47,14 +58,19 @@ export class AuthService {
       throw new ConflictException('ya existe una cuenta con ese email');
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.userRepo.save(this.userRepo.create({ email, passwordHash }));
+    const user = await this.userRepo.save(
+      this.userRepo.create({ email, passwordHash }),
+    );
     await this.sendVerificationEmail(user.id, user.email);
     return this.issueTokenPair(user.id, user.email);
   }
 
   async login(email: string, password: string): Promise<TokenPair> {
     const user = await this.userRepo.findOneBy({ email });
-    if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (
+      !user?.passwordHash ||
+      !(await bcrypt.compare(password, user.passwordHash))
+    ) {
       throw new UnauthorizedException('credenciales inválidas');
     }
     return this.issueTokenPair(user.id, user.email);
@@ -71,7 +87,10 @@ export class AuthService {
       if (user) {
         user.googleId = profile.googleId;
       } else {
-        user = this.userRepo.create({ email: profile.email, googleId: profile.googleId });
+        user = this.userRepo.create({
+          email: profile.email,
+          googleId: profile.googleId,
+        });
       }
       if (profile.emailVerified) {
         user.emailVerified = true;
@@ -89,11 +108,18 @@ export class AuthService {
     const stored = await this.refreshTokenRepo.findOneBy({ tokenHash });
 
     if (!stored || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('sesión expirada, iniciá sesión de nuevo');
+      throw new UnauthorizedException(
+        'sesión expirada, iniciá sesión de nuevo',
+      );
     }
     if (stored.revoked) {
-      await this.refreshTokenRepo.update({ userId: stored.userId }, { revoked: true });
-      throw new UnauthorizedException('token reutilizado — la sesión fue cerrada por seguridad');
+      await this.refreshTokenRepo.update(
+        { userId: stored.userId },
+        { revoked: true },
+      );
+      throw new UnauthorizedException(
+        'token reutilizado — la sesión fue cerrada por seguridad',
+      );
     }
 
     await this.refreshTokenRepo.update({ id: stored.id }, { revoked: true });
@@ -106,19 +132,32 @@ export class AuthService {
   }
 
   async logout(rawToken: string): Promise<void> {
-    await this.refreshTokenRepo.update({ tokenHash: hashToken(rawToken) }, { revoked: true });
+    await this.refreshTokenRepo.update(
+      { tokenHash: hashToken(rawToken) },
+      { revoked: true },
+    );
   }
 
-  async getProfile(userId: string): Promise<{ id: string; email: string; emailVerified: boolean }> {
+  async getProfile(
+    userId: string,
+  ): Promise<{ id: string; email: string; emailVerified: boolean }> {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) {
       throw new UnauthorizedException('usuario no encontrado');
     }
-    return { id: user.id, email: user.email, emailVerified: user.emailVerified };
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+    };
   }
 
   async sendVerificationEmail(userId: string, email: string): Promise<void> {
-    const rawToken = await this.createVerificationToken(userId, VerificationTokenPurpose.EMAIL_VERIFY, EMAIL_VERIFY_TTL_MS);
+    const rawToken = await this.createVerificationToken(
+      userId,
+      VerificationTokenPurpose.EMAIL_VERIFY,
+      EMAIL_VERIFY_TTL_MS,
+    );
     const link = `${frontendOrigin()}/verify-email?token=${rawToken}`;
     await this.mailService.send(
       email,
@@ -135,7 +174,10 @@ export class AuthService {
   }
 
   async verifyEmail(rawToken: string): Promise<void> {
-    const userId = await this.consumeToken(rawToken, VerificationTokenPurpose.EMAIL_VERIFY);
+    const userId = await this.consumeToken(
+      rawToken,
+      VerificationTokenPurpose.EMAIL_VERIFY,
+    );
     await this.userRepo.update({ id: userId }, { emailVerified: true });
   }
 
@@ -144,7 +186,11 @@ export class AuthService {
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepo.findOneBy({ email });
     if (!user) return;
-    const rawToken = await this.createVerificationToken(user.id, VerificationTokenPurpose.PASSWORD_RESET, PASSWORD_RESET_TTL_MS);
+    const rawToken = await this.createVerificationToken(
+      user.id,
+      VerificationTokenPurpose.PASSWORD_RESET,
+      PASSWORD_RESET_TTL_MS,
+    );
     const link = `${frontendOrigin()}/reset-password?token=${rawToken}`;
     await this.mailService.send(
       email,
@@ -155,7 +201,10 @@ export class AuthService {
   }
 
   async resetPassword(rawToken: string, newPassword: string): Promise<void> {
-    const userId = await this.consumeToken(rawToken, VerificationTokenPurpose.PASSWORD_RESET);
+    const userId = await this.consumeToken(
+      rawToken,
+      VerificationTokenPurpose.PASSWORD_RESET,
+    );
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.userRepo.update({ id: userId }, { passwordHash });
     // cerrar todas las sesiones activas — si alguien más tenía una sesión abierta
@@ -180,22 +229,41 @@ export class AuthService {
     return rawToken;
   }
 
-  private async consumeToken(rawToken: string, purpose: VerificationTokenPurpose): Promise<string> {
-    const stored = await this.verificationTokenRepo.findOneBy({ tokenHash: hashToken(rawToken), purpose });
+  private async consumeToken(
+    rawToken: string,
+    purpose: VerificationTokenPurpose,
+  ): Promise<string> {
+    const stored = await this.verificationTokenRepo.findOneBy({
+      tokenHash: hashToken(rawToken),
+      purpose,
+    });
     if (!stored || stored.usedAt || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('link inválido o vencido');
     }
-    await this.verificationTokenRepo.update({ id: stored.id }, { usedAt: new Date() });
+    await this.verificationTokenRepo.update(
+      { id: stored.id },
+      { usedAt: new Date() },
+    );
     return stored.userId;
   }
 
-  private async issueTokenPair(userId: string, email: string): Promise<TokenPair> {
-    const accessToken = this.jwtService.sign({ sub: userId, email }, { expiresIn: ACCESS_TOKEN_TTL });
+  private async issueTokenPair(
+    userId: string,
+    email: string,
+  ): Promise<TokenPair> {
+    const accessToken = this.jwtService.sign(
+      { sub: userId, email },
+      { expiresIn: ACCESS_TOKEN_TTL },
+    );
 
     const refreshToken = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
     await this.refreshTokenRepo.save(
-      this.refreshTokenRepo.create({ userId, tokenHash: hashToken(refreshToken), expiresAt }),
+      this.refreshTokenRepo.create({
+        userId,
+        tokenHash: hashToken(refreshToken),
+        expiresAt,
+      }),
     );
 
     return { accessToken, refreshToken, refreshTokenExpiresAt: expiresAt };

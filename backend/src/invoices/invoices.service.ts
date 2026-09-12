@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AfipCredentialsService } from '../afip-credentials/afip-credentials.service';
@@ -11,7 +16,8 @@ import { Invoice, InvoiceStatus } from './entities/invoice.entity';
 @Injectable()
 export class InvoicesService {
   constructor(
-    @InjectRepository(Invoice) private readonly invoiceRepo: Repository<Invoice>,
+    @InjectRepository(Invoice)
+    private readonly invoiceRepo: Repository<Invoice>,
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly credentialsService: AfipCredentialsService,
     private readonly afipClient: AfipClientService,
@@ -27,10 +33,15 @@ export class InvoicesService {
     // asegurarnos de que hay una casilla real detrás de cada comprobante.
     const profile = await this.authService.getProfile(userId);
     if (!profile.emailVerified) {
-      throw new ForbiddenException('confirmá tu email antes de emitir facturas');
+      throw new ForbiddenException(
+        'confirmá tu email antes de emitir facturas',
+      );
     }
 
-    const credential = await this.credentialsService.get(userId, dto.credentialId);
+    const credential = await this.credentialsService.get(
+      userId,
+      dto.credentialId,
+    );
     if (!credential) {
       throw new NotFoundException('credencial de ARCA no encontrada');
     }
@@ -122,7 +133,10 @@ export class InvoicesService {
             errorMessage: (err as Error).message,
           }),
         );
-        await idempotencyRepo.update({ key: scopedKey }, { responseBody: savedInvoice });
+        await idempotencyRepo.update(
+          { key: scopedKey },
+          { responseBody: savedInvoice },
+        );
         await queryRunner.commitTransaction();
         throw new BadRequestException({
           message: 'ARCA rechazó el comprobante',
@@ -131,7 +145,10 @@ export class InvoicesService {
         });
       }
 
-      await idempotencyRepo.update({ key: scopedKey }, { responseBody: savedInvoice });
+      await idempotencyRepo.update(
+        { key: scopedKey },
+        { responseBody: savedInvoice },
+      );
       await queryRunner.commitTransaction();
       return savedInvoice;
     } catch (err) {
@@ -145,7 +162,10 @@ export class InvoicesService {
   }
 
   findForUser(userId: string) {
-    return this.invoiceRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    return this.invoiceRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   // borra solo lo que se puede borrar sin perder un registro fiscal real: facturas
@@ -156,8 +176,13 @@ export class InvoicesService {
     if (!invoice) {
       throw new NotFoundException('factura no encontrada');
     }
-    if (invoice.environment === 'production' && invoice.status === InvoiceStatus.ISSUED) {
-      throw new ForbiddenException('no se puede borrar una factura real ya emitida');
+    if (
+      invoice.environment === 'production' &&
+      invoice.status === InvoiceStatus.ISSUED
+    ) {
+      throw new ForbiddenException(
+        'no se puede borrar una factura real ya emitida',
+      );
     }
     await this.invoiceRepo.delete({ id: invoiceId, userId });
     return { deleted: true };
@@ -181,7 +206,10 @@ export class InvoicesService {
       activityStartDate: invoice.issuerActivityStartDate,
     };
     if (!issuer.cuit) {
-      const credential = await this.credentialsService.get(userId, invoice.credentialId);
+      const credential = await this.credentialsService.get(
+        userId,
+        invoice.credentialId,
+      );
       if (!credential) {
         throw new NotFoundException('credencial de ARCA no encontrada');
       }
