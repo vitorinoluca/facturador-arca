@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
   Query,
   Req,
@@ -40,6 +41,8 @@ const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly googleOAuthService: GoogleOAuthService,
@@ -79,6 +82,10 @@ export class AuthController {
     const expectedState = (req.cookies as Record<string, string> | undefined)?.google_oauth_state;
     res.clearCookie('google_oauth_state', cookieBase);
     if (!code || !state || !expectedState || state !== expectedState) {
+      // el motivo típico: se reusó un link/vuelta de "atrás" del navegador después de
+      // ya haber completado el login una vez — la cookie de state de esa vez ya se
+      // borró (o venció, dura 10 min).
+      this.logger.warn(`google callback con state inválido (code presente: ${!!code})`);
       return res.redirect(`${frontendUrl}/login?error=google`);
     }
     try {
@@ -86,7 +93,11 @@ export class AuthController {
       const tokens = await this.authService.loginWithGoogle(profile);
       this.setTokenCookies(res, tokens);
       return res.redirect(`${frontendUrl}/dashboard`);
-    } catch {
+    } catch (err) {
+      // sin este log no hay forma de saber por qué falló — Google rechazó el code
+      // (reusado, vencido — dura ~10 min y es de un solo uso), redirect_uri mal
+      // configurado, etc. El usuario solo ve "no se pudo", esto queda para debug.
+      this.logger.error(`falló el login con Google: ${(err as Error).message}`);
       return res.redirect(`${frontendUrl}/login?error=google`);
     }
   }
