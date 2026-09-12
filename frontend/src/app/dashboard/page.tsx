@@ -257,7 +257,7 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
         </p>
       </div>
 
-      <Guide />
+      {!delegationOk && <Guide />}
 
       <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
         <Field label="CUIT" hint="El que usaste para delegar en ARCA">
