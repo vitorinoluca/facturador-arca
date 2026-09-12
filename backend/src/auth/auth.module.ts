@@ -21,6 +21,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
-  exports: [JwtAuthGuard, JwtModule],
+  // TypeOrmModule también se reexporta: JwtAuthGuard ahora valida el usuario contra
+  // la base (Repository<User>), y otros módulos lo usan vía @UseGuards(JwtAuthGuard)
+  // por referencia de clase — necesitan poder resolver esa dependencia también.
+  exports: [JwtAuthGuard, JwtModule, TypeOrmModule],
 })
 export class AuthModule {}

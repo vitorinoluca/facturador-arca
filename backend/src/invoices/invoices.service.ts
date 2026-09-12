@@ -26,6 +26,11 @@ export class InvoicesService {
       throw new NotFoundException('credencial de ARCA no encontrada');
     }
 
+    // la tabla de idempotencia es global — namespacear por usuario evita que dos
+    // usuarios que manden (o reusen) la misma Idempotency-Key terminen leyendo la
+    // respuesta guardada del otro (fuga de datos entre cuentas).
+    const scopedKey = `${userId}:${idempotencyKey}`;
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -38,11 +43,11 @@ export class InvoicesService {
       const idempotencyRepo = queryRunner.manager.getRepository(IdempotencyKey);
       const inserted: Array<{ key: string }> = await queryRunner.query(
         `INSERT INTO idempotency_keys(key) VALUES ($1) ON CONFLICT (key) DO NOTHING RETURNING key`,
-        [idempotencyKey],
+        [scopedKey],
       );
 
       if (inserted.length === 0) {
-        const existing = await idempotencyRepo.findOneBy({ key: idempotencyKey });
+        const existing = await idempotencyRepo.findOneBy({ key: scopedKey });
         await queryRunner.commitTransaction();
         return existing!.responseBody;
       }
@@ -108,7 +113,7 @@ export class InvoicesService {
             errorMessage: (err as Error).message,
           }),
         );
-        await idempotencyRepo.update({ key: idempotencyKey }, { responseBody: savedInvoice });
+        await idempotencyRepo.update({ key: scopedKey }, { responseBody: savedInvoice });
         await queryRunner.commitTransaction();
         throw new BadRequestException({
           message: 'ARCA rechazó el comprobante',
@@ -117,7 +122,7 @@ export class InvoicesService {
         });
       }
 
-      await idempotencyRepo.update({ key: idempotencyKey }, { responseBody: savedInvoice });
+      await idempotencyRepo.update({ key: scopedKey }, { responseBody: savedInvoice });
       await queryRunner.commitTransaction();
       return savedInvoice;
     } catch (err) {

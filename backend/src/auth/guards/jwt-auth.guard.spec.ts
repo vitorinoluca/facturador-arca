@@ -11,11 +11,13 @@ function contextWithCookie(accessToken?: string): ExecutionContext {
 
 describe('JwtAuthGuard', () => {
   let jwtService: jest.Mocked<JwtService>;
+  let userRepo: { existsBy: jest.Mock };
   let guard: JwtAuthGuard;
 
   beforeEach(() => {
     jwtService = { verifyAsync: jest.fn() } as unknown as jest.Mocked<JwtService>;
-    guard = new JwtAuthGuard(jwtService);
+    userRepo = { existsBy: jest.fn().mockResolvedValue(true) };
+    guard = new JwtAuthGuard(jwtService, userRepo as never);
   });
 
   it('rechaza sin cookie de access_token', async () => {
@@ -35,5 +37,12 @@ describe('JwtAuthGuard', () => {
 
     const request = context.switchToHttp().getRequest<{ user: { id: string; email: string } }>();
     expect(request.user).toEqual({ id: 'user-1', email: 'a@a.com' });
+  });
+
+  it('rechaza un token válido si el usuario ya no existe (cuenta borrada)', async () => {
+    jwtService.verifyAsync.mockResolvedValue({ sub: 'user-borrado', email: 'a@a.com' });
+    userRepo.existsBy.mockResolvedValue(false);
+
+    await expect(guard.canActivate(contextWithCookie('valido'))).rejects.toThrow(UnauthorizedException);
   });
 });
