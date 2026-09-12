@@ -355,7 +355,7 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
               </Field>
               <Field
                 label="Inicio de actividades"
-                help="Buscala en tu Constancia de Inscripción de Monotributo en ARCA (Monotributo → Constancia de Inscripción), o en la constancia que te dieron al inscribirte."
+                help="Entrá a ARCA con tu Clave Fiscal → Monotributo → Constancia de Opción: te genera un PDF con la fecha de inicio de actividades impresa."
               >
                 <input
                   type="date"
