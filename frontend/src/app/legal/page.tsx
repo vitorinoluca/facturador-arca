@@ -89,9 +89,7 @@ export default function LegalPage() {
             <a href="mailto:valentinvitorino28@gmail.com" className="text-accent underline">
               valentinvitorino28@gmail.com
             </a>{" "}
-            para ejercer cualquiera de estos derechos — la Agencia de Acceso a la Información
-            Pública (AAIP) es la autoridad de control de la Ley 25.326, por si preferís reclamar
-            ahí directamente.
+            para ejercer cualquiera de estos derechos.
           </p>
           <p className="text-ink-muted">
             Revocar la delegación en ARCA no borra tus datos de esta app automáticamente — son dos
@@ -99,14 +97,6 @@ export default function LegalPage() {
             facturación de la base en un plazo máximo de 30 días desde el pedido. Las facturas que
             ya emitiste siguen existiendo de todos modos: son registros fiscales de ARCA, no un
             archivo que dependa de esta app.
-          </p>
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="font-medium text-ink">Ley aplicable</h2>
-          <p className="text-ink-muted">
-            Este proyecto se rige por las leyes de la República Argentina. Cualquier controversia
-            se resolverá ante los tribunales ordinarios competentes.
           </p>
         </section>
 
