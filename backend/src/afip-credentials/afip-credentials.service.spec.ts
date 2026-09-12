@@ -1,7 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AuthService } from '../auth/auth.service';
 import { AfipCredentialsService } from './afip-credentials.service';
 import { CreateAfipCredentialDto } from './dto/create-afip-credential.dto';
 import { AfipCredential } from './entities/afip-credential.entity';
@@ -16,6 +17,7 @@ const dto: CreateAfipCredentialDto = {
 describe('AfipCredentialsService', () => {
   let service: AfipCredentialsService;
   let repo: jest.Mocked<Repository<AfipCredential>>;
+  let authService: jest.Mocked<AuthService>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -31,14 +33,25 @@ describe('AfipCredentialsService', () => {
             delete: jest.fn(),
           },
         },
+        {
+          provide: AuthService,
+          useValue: { getProfile: jest.fn().mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: true }) },
+        },
       ],
     }).compile();
 
     service = module.get(AfipCredentialsService);
     repo = module.get(getRepositoryToken(AfipCredential));
+    authService = module.get(AuthService);
   });
 
   describe('create', () => {
+    it('rechaza si el email no está verificado', async () => {
+      authService.getProfile.mockResolvedValue({ id: 'user-1', email: 'a@a.com', emailVerified: false });
+      await expect(service.create('user-1', dto)).rejects.toThrow(ForbiddenException);
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
     it('rechaza si el usuario ya tiene una credencial', async () => {
       repo.findOneBy.mockResolvedValue({ id: 'existing' } as AfipCredential);
       await expect(service.create('user-1', dto)).rejects.toThrow(ConflictException);

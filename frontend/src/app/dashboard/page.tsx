@@ -93,14 +93,26 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {!emailVerified && credentials !== null && <VerifyEmailBanner />}
+        {!emailVerified && credentials !== null && credential !== null && <VerifyEmailBanner />}
 
         {credentials === null ? (
           <div className="flex min-h-[40vh] items-center justify-center text-ink-faint">
             <Spinner className="h-6 w-6" />
           </div>
         ) : credential === null ? (
-          <CredentialOnboarding onCreated={loadAll} />
+          !emailVerified ? (
+            <div className="border border-line bg-surface px-6 py-10 text-center">
+              <p className="text-sm text-ink">
+                Confirmá tu email antes de delegar la facturación electrónica.
+              </p>
+              <p className="mt-1 text-sm text-ink-muted">Te mandamos un link al registrarte.</p>
+              <div className="mt-4">
+                <ResendVerificationButton />
+              </div>
+            </div>
+          ) : (
+            <CredentialOnboarding onCreated={loadAll} />
+          )
         ) : (
           <>
             <HelpStrip />
@@ -115,7 +127,7 @@ export default function DashboardPage() {
   );
 }
 
-function VerifyEmailBanner() {
+function ResendVerificationButton() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -132,20 +144,23 @@ function VerifyEmailBanner() {
     }
   }
 
+  if (sent) return <span className="text-xs text-status-issued">Mail reenviado</span>;
+  return (
+    <button
+      onClick={handleResend}
+      disabled={sending}
+      className="shrink-0 text-xs font-medium text-accent underline disabled:opacity-50"
+    >
+      {sending ? "enviando..." : "reenviar mail"}
+    </button>
+  );
+}
+
+function VerifyEmailBanner() {
   return (
     <div className="mb-6 flex items-center justify-between gap-3 border border-line bg-paper px-4 py-2 text-sm text-ink-muted">
       <span>Confirmá tu email para poder emitir facturas (reales o de prueba).</span>
-      {sent ? (
-        <span className="text-xs text-status-issued">Mail reenviado</span>
-      ) : (
-        <button
-          onClick={handleResend}
-          disabled={sending}
-          className="shrink-0 text-xs font-medium text-accent underline disabled:opacity-50"
-        >
-          {sending ? "enviando..." : "reenviar mail"}
-        </button>
-      )}
+      <ResendVerificationButton />
     </div>
   );
 }
