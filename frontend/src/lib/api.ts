@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 // El access token vive en una cookie httpOnly — el navegador la manda solo si el
 // fetch tiene credentials:"include", y JS no puede leerla ni guardarla a mano
@@ -39,9 +39,9 @@ export async function apiBlob(path: string, isRetry = false): Promise<Blob> {
   return res.blob();
 }
 
-export async function getSession(): Promise<{ id: string; email: string } | null> {
+export async function getSession(): Promise<{ id: string; email: string; emailVerified: boolean } | null> {
   try {
-    return await api<{ id: string; email: string }>("/auth/me");
+    return await api<{ id: string; email: string; emailVerified: boolean }>("/auth/me");
   } catch {
     return null;
   }

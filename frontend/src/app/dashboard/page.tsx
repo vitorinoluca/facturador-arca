@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [credentials, setCredentials] = useState<Credential[] | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState(true); // true hasta saber lo contrario, para no parpadear el banner
 
   useEffect(() => {
     void (async () => {
@@ -43,6 +44,7 @@ export default function DashboardPage() {
         router.replace("/login");
         return;
       }
+      setEmailVerified(session.emailVerified);
       void loadAll();
     })();
   }, [router]);
@@ -91,6 +93,8 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {!emailVerified && credentials !== null && <VerifyEmailBanner />}
+
         {credentials === null ? (
           <div className="flex min-h-[40vh] items-center justify-center text-ink-faint">
             <Spinner className="h-6 w-6" />
@@ -107,6 +111,41 @@ export default function DashboardPage() {
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+function VerifyEmailBanner() {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function handleResend() {
+    setSending(true);
+    try {
+      await api("/auth/resend-verification", { method: "POST" });
+      setSent(true);
+    } catch {
+      // silencioso: no es una acción crítica, no vale la pena un banner de error
+      // encima del banner
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mb-6 flex items-center justify-between gap-3 border border-line bg-paper px-4 py-2 text-sm text-ink-muted">
+      <span>Confirmá tu email para asegurar el acceso a tu cuenta.</span>
+      {sent ? (
+        <span className="text-xs text-status-issued">Mail reenviado</span>
+      ) : (
+        <button
+          onClick={handleResend}
+          disabled={sending}
+          className="shrink-0 text-xs font-medium text-accent underline disabled:opacity-50"
+        >
+          {sending ? "enviando..." : "reenviar mail"}
+        </button>
+      )}
     </div>
   );
 }

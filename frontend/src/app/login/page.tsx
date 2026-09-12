@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
 import { Spinner } from "@/components/spinner";
+import { GoogleButton } from "@/components/google-button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +15,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // ?error=google llega tras un callback de OAuth fallido (main navigation, no fetch
+  // — por eso se lee de window.location en vez de useSearchParams, que exigiría
+  // envolver la página en <Suspense>).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("error") === "google") {
+      setError("No se pudo iniciar sesión con Google. Probá de nuevo.");
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +51,16 @@ export default function LoginPage() {
           <p className="mt-1 text-xs text-ink-muted">Iniciá sesión para emitir</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 px-8 py-6">
+        <div className="space-y-3 px-8 pt-6">
+          <GoogleButton />
+          <div className="flex items-center gap-3 text-xs text-ink-faint">
+            <div className="h-px flex-1 bg-line" />
+            o con tu email
+            <div className="h-px flex-1 bg-line" />
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3 px-8 pb-6 pt-3">
           <input
             type="email"
             placeholder="Email"
@@ -58,6 +77,11 @@ export default function LoginPage() {
             required
             className="w-full border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
           />
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-xs text-ink-muted hover:text-ink hover:underline">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
           {error && <p className="text-sm text-status-failed">{error}</p>}
           <button
             type="submit"

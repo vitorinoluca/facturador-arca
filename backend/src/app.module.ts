@@ -8,6 +8,7 @@ import { AfipCredential } from './afip-credentials/entities/afip-credential.enti
 import { AuthModule } from './auth/auth.module';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { User } from './auth/entities/user.entity';
+import { VerificationToken } from './auth/entities/verification-token.entity';
 import { IdempotencyKey } from './invoices/entities/idempotency-key.entity';
 import { Invoice } from './invoices/entities/invoice.entity';
 import { InvoicesModule } from './invoices/invoices.module';
@@ -21,7 +22,7 @@ import { InvoicesModule } from './invoices/invoices.module';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, RefreshToken, AfipCredential, Invoice, IdempotencyKey],
+      entities: [User, RefreshToken, VerificationToken, AfipCredential, Invoice, IdempotencyKey],
       migrations: [__dirname + '/migrations/*.{js,ts}'],
       migrationsRun: true, // corre las migraciones pendientes solas al arrancar
       synchronize: false,

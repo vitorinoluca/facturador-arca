@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
 import { Spinner } from "@/components/spinner";
+import { GoogleButton } from "@/components/google-button";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -41,7 +42,16 @@ export default function RegisterPage() {
           <p className="mt-1 text-xs text-ink-muted">Creá tu cuenta</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 px-8 py-6">
+        <div className="space-y-3 px-8 pt-6">
+          <GoogleButton />
+          <div className="flex items-center gap-3 text-xs text-ink-faint">
+            <div className="h-px flex-1 bg-line" />
+            o con tu email
+            <div className="h-px flex-1 bg-line" />
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3 px-8 pb-6 pt-3">
           <input
             type="email"
             placeholder="Email"
