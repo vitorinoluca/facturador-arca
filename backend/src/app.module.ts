@@ -22,10 +22,25 @@ import { InvoicesModule } from './invoices/invoices.module';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [User, RefreshToken, VerificationToken, AfipCredential, Invoice, IdempotencyKey],
+      entities: [
+        User,
+        RefreshToken,
+        VerificationToken,
+        AfipCredential,
+        Invoice,
+        IdempotencyKey,
+      ],
       migrations: [__dirname + '/migrations/*.{js,ts}'],
-      migrationsRun: true, // corre las migraciones pendientes solas al arrancar
+      // las migraciones corren como paso del build (ver vercel.json / README), no
+      // acá — en serverless cada cold start crearía esta app de nuevo, y correrlas
+      // en cada arranque es innecesario (ya corrieron) y arriesga una carrera si dos
+      // cold starts arrancan a la vez.
+      migrationsRun: false,
       synchronize: false,
+      // Neon (y la mayoría de los Postgres administrados) piden TLS; localhost no.
+      ssl: process.env.DATABASE_URL?.includes('localhost')
+        ? false
+        : { rejectUnauthorized: false },
     }),
     AuthModule,
     AfipCredentialsModule,

@@ -12,6 +12,19 @@ import { Invoice } from './invoices/entities/invoice.entity';
 export default new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: [User, RefreshToken, VerificationToken, AfipCredential, Invoice, IdempotencyKey],
+  entities: [
+    User,
+    RefreshToken,
+    VerificationToken,
+    AfipCredential,
+    Invoice,
+    IdempotencyKey,
+  ],
   migrations: ['src/migrations/*.ts'],
+  // mismo criterio que app.module.ts: Neon (y la mayoría de los Postgres
+  // administrados) piden TLS; localhost no. Esto es lo que corre en el build de
+  // Vercel (ver vercel.json), contra la base de producción real.
+  ssl: process.env.DATABASE_URL?.includes('localhost')
+    ? false
+    : { rejectUnauthorized: false },
 });
