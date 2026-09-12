@@ -161,10 +161,31 @@ const inputClass =
 const primaryButtonClass =
   "border border-accent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50";
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  help,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  help?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-medium text-ink-muted">{label}</span>
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted">
+        {label}
+        {help && (
+          <span
+            title={help}
+            tabIndex={0}
+            className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-ink-faint text-[9px] leading-none text-ink-faint"
+          >
+            ?
+          </span>
+        )}
+      </span>
       {children}
       {hint && <span className="block text-[11px] leading-snug text-ink-faint">{hint}</span>}
     </label>
@@ -332,7 +353,10 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
                   className={inputClass}
                 />
               </Field>
-              <Field label="Inicio de actividades">
+              <Field
+                label="Inicio de actividades"
+                help="Buscala en tu Constancia de Inscripción de Monotributo en ARCA (Monotributo → Constancia de Inscripción), o en la constancia que te dieron al inscribirte."
+              >
                 <input
                   type="date"
                   value={activityStartDate}
