@@ -202,6 +202,7 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
         return;
       }
       setDelegationOk(true);
+      await handleLookup();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -210,11 +211,6 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   }
 
   async function handleLookup() {
-    if (!/^\d{11}$/.test(cuit)) {
-      setError("Ingresá un CUIT válido (11 dígitos) antes de buscar");
-      return;
-    }
-    setError(null);
     setLookingUp(true);
     try {
       const data = await api<{ businessName: string; address: string; activityStartDate?: string }>(
@@ -268,7 +264,7 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
       <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
         <Field label="CUIT" hint="El que usaste para delegar en ARCA">
           <input
-            placeholder="20460137749"
+            placeholder="20XXXXXXXX9"
             value={cuit}
             onChange={(e) => {
               setCuit(e.target.value);
@@ -295,26 +291,25 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
 
         {delegationOk && (
           <>
-            <p className="text-sm text-status-issued">Delegación confirmada en ARCA.</p>
+            <span className="inline-flex items-center gap-1.5 border border-status-issued/30 bg-status-issued-tint px-2.5 py-1 text-sm font-medium text-status-issued">
+              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <circle cx="8" cy="8" r="6.4" />
+                <path d="M5.2 8.1l1.8 1.8 3.6-4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Delegación confirmada en ARCA
+            </span>
 
-            <Field label="Razón social" hint="Va impresa en el PDF de la factura">
-              <div className="flex gap-2">
-                <input
-                  placeholder="Tu nombre y apellido, o el nombre de tu actividad"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  required
-                  className={inputClass}
-                />
-                <button
-                  type="button"
-                  onClick={handleLookup}
-                  disabled={lookingUp}
-                  className="shrink-0 border border-line px-3 text-xs text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-50"
-                >
-                  {lookingUp ? "Buscando..." : "Buscar datos"}
-                </button>
-              </div>
+            <Field
+              label="Razón social"
+              hint={lookingUp ? "Buscando datos en ARCA..." : "Va impresa en el PDF de la factura"}
+            >
+              <input
+                placeholder="Tu nombre y apellido, o el nombre de tu actividad"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                required
+                className={inputClass}
+              />
             </Field>
 
             <Field label="Domicilio comercial">
@@ -359,11 +354,29 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   );
 }
 
+function GuideStep({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-line">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left font-medium text-ink hover:bg-surface"
+      >
+        <span>
+          {number}. {title}
+        </span>
+        <span className="text-xs font-normal text-ink-muted">{open ? "ocultar" : "ver pasos"}</span>
+      </button>
+      {open && <div className="border-t border-line px-4 py-3 text-sm">{children}</div>}
+    </div>
+  );
+}
+
 function Guide() {
   return (
-    <div className="space-y-4 border-b border-line bg-paper px-6 py-5 text-sm text-ink">
-      <div>
-        <p className="font-medium">1. Delegar la facturación electrónica</p>
+    <div className="space-y-3 border-b border-line bg-paper px-6 py-5 text-sm text-ink">
+      <GuideStep number={1} title="Delegar la facturación electrónica">
         <ol className="ml-4 list-decimal space-y-1 text-ink-muted">
           <li>
             Entrá a{" "}
@@ -387,22 +400,26 @@ function Guide() {
           </li>
           <li>Si aparece un aviso en rojo sobre no tener un facturador propio registrado, ignoralo.</li>
         </ol>
-      </div>
-      <div>
-        <p className="font-medium">2. Crear tu punto de venta</p>
+      </GuideStep>
+      <GuideStep number={2} title="Crear tu punto de venta">
         <ol className="ml-4 list-decimal space-y-1 text-ink-muted">
           <li>
             En ARCA, entrá a <strong>Administración de puntos de venta y domicilios</strong> →{" "}
-            <strong>Agregar</strong>.
+            <strong>A/B/M de puntos de venta / emisión</strong>.
           </li>
-          <li>Elegí un número de punto de venta que no estés usando.</li>
           <li>
-            Sistema: <strong>Facturación Electrónica - Monotributo - Webservice</strong>. Domicilio: tu
-            domicilio fiscal.
+            Si ya tenés un punto de venta con Sistema{" "}
+            <strong>Facturación Electrónica - Monotributo - Webservice</strong> (por ejemplo si facturabas
+            manual, o si ARCA te lo habilitó de oficio), anotá su número y listo.
+          </li>
+          <li>
+            Si no, <strong>Agregar..</strong> uno nuevo: elegí un número libre y, en{" "}
+            <strong>Sistema</strong>, cambiá lo que viene tildado por defecto (CAEA) por{" "}
+            <strong>Facturación Electrónica - Monotributo - Webservice</strong>.
           </li>
         </ol>
-      </div>
-      <div>
+      </GuideStep>
+      <div className="border border-line px-4 py-3">
         <p className="font-medium">3. Cargá tus datos acá abajo</p>
         <p className="text-ink-muted">
           Con la delegación hecha, completá el formulario — el número de punto de venta que creaste va
