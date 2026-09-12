@@ -473,7 +473,7 @@ function HelpStrip() {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-4 py-2 text-left text-xs text-ink-muted hover:text-ink"
       >
-        <span>Guía: delegar en otro ambiente (testing/producción)</span>
+        <span>Guía: delegar en otro ambiente (prueba/real)</span>
         <span>{open ? "ocultar" : "ver"}</span>
       </button>
       {open && <Guide />}
@@ -502,7 +502,7 @@ function EnvironmentSwitch({
         onClick={() => onChange("production")}
         className={`px-3 py-1.5 ${value === "production" ? "bg-status-failed text-white" : "text-ink-muted hover:text-ink"}`}
       >
-        Producción
+        Real
       </button>
     </div>
   );
@@ -582,7 +582,7 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
       </div>
       {environment === "production" && (
         <p className="border-b border-line bg-status-failed-tint px-5 py-2 text-xs font-medium text-status-failed">
-          Modo producción: esto emite un comprobante fiscal real con CAE real.
+          Modo real: esto emite un comprobante fiscal real con CAE real.
         </p>
       )}
       <div className="space-y-4 px-5 py-5">
