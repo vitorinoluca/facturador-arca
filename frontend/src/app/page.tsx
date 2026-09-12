@@ -194,7 +194,7 @@ function Faq() {
     },
     {
       q: "¿Puedo probarlo sin arriesgar nada?",
-      a: "Sí — elegís 'Testing (homologación)' al delegar. Emite comprobantes de prueba, sin CAE real ni validez fiscal, hasta que decidas pasar a producción.",
+      a: "Sí — elegís 'Prueba' en el switch de ambiente al emitir una factura. Son comprobantes de prueba (homologación de ARCA), sin CAE real ni validez fiscal, hasta que decidas pasar a 'Real'.",
     },
     {
       q: "¿Qué pasa si quiero dejar de usarlo?",
