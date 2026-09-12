@@ -4,6 +4,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AfipClientService } from '../afip/afip-client.service';
+import { isValidCuit } from '../common/is-valid-cuit';
 import { AfipCredentialsService } from './afip-credentials.service';
 import { CreateAfipCredentialDto } from './dto/create-afip-credential.dto';
 
@@ -24,8 +25,8 @@ export class AfipCredentialsController {
     @Param('cuit') cuit: string,
     @Query('environment') environment: 'testing' | 'production' = 'production',
   ) {
-    if (!/^\d{11}$/.test(cuit)) {
-      throw new BadRequestException('cuit debe tener 11 dígitos');
+    if (!isValidCuit(cuit)) {
+      throw new BadRequestException('cuit inválido');
     }
     let result;
     try {
@@ -48,8 +49,8 @@ export class AfipCredentialsController {
     @Param('cuit') cuit: string,
     @Query('environment') environment: 'testing' | 'production' = 'production',
   ) {
-    if (!/^\d{11}$/.test(cuit)) {
-      throw new BadRequestException('cuit debe tener 11 dígitos');
+    if (!isValidCuit(cuit)) {
+      throw new BadRequestException('cuit inválido');
     }
     return this.afipClient.checkDelegation(cuit, environment);
   }

@@ -1,7 +1,8 @@
-import { IsDateString, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsDateString, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsCuit } from '../../common/decorators/is-cuit.decorator';
 
 export class CreateAfipCredentialDto {
-  @Matches(/^\d{11}$/, { message: 'cuit debe tener 11 dígitos' })
+  @IsCuit()
   cuit: string;
 
   @MinLength(2)

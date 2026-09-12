@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, apiBlob, getSession, logout } from "@/lib/api";
+import { isValidCuit } from "@/lib/is-valid-cuit";
 import { SealMark } from "@/components/seal-mark";
 import { Footer } from "@/components/footer";
 
@@ -187,8 +188,8 @@ function CredentialOnboarding({ onCreated }: { onCreated: () => void }) {
   const [checkingDelegation, setCheckingDelegation] = useState(false);
 
   async function handleCheckDelegation() {
-    if (!/^\d{11}$/.test(cuit)) {
-      setError("Ingresá un CUIT válido (11 dígitos)");
+    if (!isValidCuit(cuit)) {
+      setError("Ingresá un CUIT válido");
       return;
     }
     setError(null);
@@ -507,8 +508,8 @@ function QuickEntryRow({ credential, onCreated }: { credential: Credential; onCr
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (clientIvaCondition !== "Consumidor Final" && !/^\d{11}$/.test(clientCuit)) {
-      setError("Esta condición de IVA requiere un CUIT válido (11 dígitos) del cliente");
+    if (clientIvaCondition !== "Consumidor Final" && !isValidCuit(clientCuit)) {
+      setError("Esta condición de IVA requiere un CUIT válido del cliente");
       return;
     }
     setError(null);

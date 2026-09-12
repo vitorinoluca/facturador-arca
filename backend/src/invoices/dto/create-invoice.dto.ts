@@ -1,6 +1,7 @@
-import { IsDateString, IsIn, IsNumber, IsOptional, IsPositive, IsString, IsUUID, Matches, MaxLength, ValidateIf } from 'class-validator';
+import { IsDateString, IsIn, IsNumber, IsOptional, IsPositive, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
 import { CLIENT_IVA_CONDITIONS } from '../../afip/afip-client.service';
 import type { ClientIvaCondition } from '../../afip/afip-client.service';
+import { IsCuit } from '../../common/decorators/is-cuit.decorator';
 
 export class CreateInvoiceDto {
   @IsUUID()
@@ -26,7 +27,7 @@ export class CreateInvoiceDto {
   // requieren identificar al receptor ante ARCA)
   @ValidateIf((dto: CreateInvoiceDto) => dto.clientIvaCondition !== 'Consumidor Final')
   @IsString()
-  @Matches(/^\d{11}$/, { message: 'clientCuit debe tener 11 dígitos' })
+  @IsCuit()
   clientCuit?: string;
 
   @IsOptional()
