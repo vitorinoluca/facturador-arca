@@ -408,13 +408,8 @@ function Guide() {
             <strong>A/B/M de puntos de venta / emisión</strong>.
           </li>
           <li>
-            Si ya tenés un punto de venta con Sistema{" "}
-            <strong>Facturación Electrónica - Monotributo - Webservice</strong> (por ejemplo si facturabas
-            manual, o si ARCA te lo habilitó de oficio), anotá su número y listo.
-          </li>
-          <li>
-            Si no, <strong>Agregar..</strong> uno nuevo: elegí un número libre y, en{" "}
-            <strong>Sistema</strong>, cambiá lo que viene tildado por defecto (CAEA) por{" "}
+            <strong>Agregar..</strong> uno nuevo: elegí un número libre y, en <strong>Sistema</strong>,
+            cambiá lo que viene tildado por defecto (CAEA) por{" "}
             <strong>Facturación Electrónica - Monotributo - Webservice</strong>.
           </li>
         </ol>
