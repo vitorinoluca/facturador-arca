@@ -408,9 +408,24 @@ function Guide() {
             <strong>A/B/M de puntos de venta / emisión</strong>.
           </li>
           <li>
-            <strong>Agregar..</strong> uno nuevo: elegí un número libre y, en <strong>Sistema</strong>,
-            cambiá lo que viene tildado por defecto (CAEA) por{" "}
+            Hacé click en <strong>Agregar..</strong> — se abre el formulario{" "}
+            <strong>Alta de Punto de Venta / Emisión</strong>.
+          </li>
+          <li>
+            <strong>Número</strong>: uno que no estés usando (por ejemplo 1).
+          </li>
+          <li>
+            <strong>Sistema</strong>: cambiá lo que viene tildado por defecto (CAEA) por{" "}
             <strong>Facturación Electrónica - Monotributo - Webservice</strong>.
+          </li>
+          <li>
+            <strong>Nuevo domicilio</strong>: elegí tu domicilio fiscal de la lista.
+          </li>
+          <li>
+            <strong>Actividad</strong>: la que tengas registrada en el monotributo.
+          </li>
+          <li>
+            Hacé click en <strong>Aceptar</strong>.
           </li>
         </ol>
       </GuideStep>
