@@ -129,6 +129,7 @@ function Hero({ loggedIn }: { loggedIn: boolean }) {
         <a
           href="https://github.com/vitorinoluca/facturador-arca"
           target="_blank"
+          rel="noopener noreferrer"
           className="border border-line px-5 py-2.5 text-sm font-medium text-ink hover:border-line-strong"
         >
           Ver el código
