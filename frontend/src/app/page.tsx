@@ -194,6 +194,9 @@ function LedgerPreview() {
 
       <div className="mt-8 overflow-x-auto border border-line bg-surface">
         <table className="w-full min-w-[420px] text-sm">
+          <caption className="sr-only">
+            Historial de facturas emitidas con fecha, monto, CAE y estado
+          </caption>
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-faint">
               <th className="px-5 py-2 font-medium">Fecha</th>

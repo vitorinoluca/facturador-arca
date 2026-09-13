@@ -21,10 +21,13 @@ const sourceSerif = Source_Serif_4({
 
 const description =
   "Facturá en ARCA sin abrir el portal — Factura C con CAE real para monotributistas. Delegás la facturación electrónica en dos clicks, sin certificados propios.";
+// 55 caracteres, con las keywords principales (Factura C / CAE / Monotributo)
+// para el <title> — el nombre de marca solo alcanza para eso en la landing.
+const seoTitle = "Facturador ARCA — Factura C con CAE para el Monotributo";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "Facturador ARCA", template: "%s — Facturador ARCA" },
+  title: { default: seoTitle, template: "%s — Facturador ARCA" },
   description,
   keywords: ["factura electrónica", "monotributo", "ARCA", "AFIP", "WSFEv1", "factura C", "CAE"],
   alternates: { canonical: "/" },
@@ -32,11 +35,11 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_AR",
     siteName: "Facturador ARCA",
-    title: "Facturador ARCA",
+    title: seoTitle,
     description,
     url: "/",
   },
-  twitter: { card: "summary", title: "Facturador ARCA", description },
+  twitter: { card: "summary_large_image", title: seoTitle, description },
   robots: { index: true, follow: true },
 };
 
