@@ -52,28 +52,57 @@ export default function LandingPage() {
 }
 
 function Nav({ loggedIn }: { loggedIn: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  const links = (
+    <>
+      <a href="#como-funciona" className="text-ink-muted hover:text-ink" onClick={() => setOpen(false)}>
+        Cómo funciona
+      </a>
+      <a href="#seguridad" className="text-ink-muted hover:text-ink" onClick={() => setOpen(false)}>
+        Seguridad
+      </a>
+      <Link
+        href={loggedIn ? "/dashboard" : "/login"}
+        className="border border-accent bg-accent px-3 py-1.5 text-center font-medium text-white hover:bg-accent-hover"
+        onClick={() => setOpen(false)}
+      >
+        {loggedIn ? "Ir al panel" : "Ingresar"}
+      </Link>
+    </>
+  );
+
   return (
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2.5">
-          <SealMark className="h-6 w-6 text-accent" />
-          <span className="font-serif text-base font-semibold text-ink">Facturador ARCA</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <SealMark className="h-6 w-6 shrink-0 text-accent" />
+          <span className="truncate font-serif text-sm font-semibold text-ink sm:text-base">
+            Facturador ARCA
+          </span>
         </div>
-        <nav className="flex items-center gap-6 text-sm">
-          <a href="#como-funciona" className="text-ink-muted hover:text-ink">
-            Cómo funciona
-          </a>
-          <a href="#seguridad" className="text-ink-muted hover:text-ink">
-            Seguridad
-          </a>
-          <Link
-            href={loggedIn ? "/dashboard" : "/login"}
-            className="border border-accent bg-accent px-3 py-1.5 font-medium text-white hover:bg-accent-hover"
-          >
-            {loggedIn ? "Ir al panel" : "Ingresar"}
-          </Link>
-        </nav>
+        {/* nav completa: visible desde md, sin límite de ancho por link (antes competía
+            con el logo y lo hacía wrappear en pantallas angostas) */}
+        <nav className="hidden items-center gap-6 text-sm md:flex">{links}</nav>
+        <button
+          type="button"
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center text-ink md:hidden"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+            {open ? (
+              <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+            ) : (
+              <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+            )}
+          </svg>
+        </button>
       </div>
+      {open && (
+        <nav className="flex flex-col gap-4 border-t border-line px-6 py-4 text-sm md:hidden">{links}</nav>
+      )}
     </header>
   );
 }
@@ -129,7 +158,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="como-funciona" className="border-y border-line bg-surface py-16">
+    <section id="como-funciona" className="border-y border-line bg-surface py-20">
       <div className="mx-auto max-w-4xl px-6">
         <h2 className="font-serif text-2xl font-semibold text-ink">Cómo funciona</h2>
         <div className="mt-8 grid gap-8 sm:grid-cols-3">
@@ -154,7 +183,7 @@ function LedgerPreview() {
   ];
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-16">
+    <section className="mx-auto max-w-4xl px-6 py-20">
       <p className="text-xs uppercase tracking-wide text-ink-muted">Así se ve</p>
       <h2 className="mt-1 font-serif text-2xl font-semibold text-ink">
         Un historial, no una lista de exports
@@ -163,8 +192,8 @@ function LedgerPreview() {
         Cada fila es trazable: fecha, monto, CAE, y si algo falló, por qué — sin salir de la tabla.
       </p>
 
-      <div className="mt-8 border border-line bg-surface">
-        <table className="w-full text-sm">
+      <div className="mt-8 overflow-x-auto border border-line bg-surface">
+        <table className="w-full min-w-[420px] text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-faint">
               <th className="px-5 py-2 font-medium">Fecha</th>
@@ -232,7 +261,7 @@ function Faq() {
   const items = FAQ_ITEMS;
 
   return (
-    <section className="border-t border-line bg-surface py-16">
+    <section className="border-t border-line bg-surface py-20">
       <div className="mx-auto max-w-3xl px-6">
         <h2 className="font-serif text-2xl font-semibold text-ink">Preguntas frecuentes</h2>
         <dl className="mt-8 space-y-6">
@@ -265,7 +294,7 @@ function Security() {
   ];
 
   return (
-    <section id="seguridad" className="mx-auto max-w-4xl px-6 py-16">
+    <section id="seguridad" className="mx-auto max-w-4xl px-6 py-20">
       <h2 className="font-serif text-2xl font-semibold text-ink">Seguridad</h2>
       <div className="mt-8 grid gap-8 sm:grid-cols-3">
         {points.map((p) => (
