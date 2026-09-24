@@ -33,8 +33,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 const BRUTE_FORCE_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
 
 const isProd = process.env.NODE_ENV === 'production';
-// en producción front y back viven en dominios distintos (cross-site) → hace falta
-// SameSite=None + Secure; en local, mismo "site" (localhost:*) alcanza con Lax.
+// en producción el front proxea /api/* al backend (mismo dominio), pero se deja
+// SameSite=None + Secure para que siga andando si se le pega directo al backend;
+// en local, mismo "site" (localhost:*) alcanza con Lax.
 const cookieBase = {
   httpOnly: true,
   secure: isProd,

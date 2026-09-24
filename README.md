@@ -13,7 +13,7 @@ parte) y emiten facturas C reales desde una UI simple.
 
 ## Demo
 
-🔗 [app.fluxify.site](https://app.fluxify.site)
+🔗 [facturador-arca.fluxify.site](https://facturador-arca.fluxify.site)
 
 ## Stack
 
@@ -78,5 +78,7 @@ Backend y frontend corren como dos proyectos separados en Vercel (monorepo, un
 `rootDirectory` por proyecto) con Postgres de Vercel (Neon). El backend expone la app de
 Nest como función serverless en `backend/api/index.ts`; las migraciones corren como parte
 del build (`vercel.json`).
+El frontend proxea `/api/*` al backend (rewrite en `next.config.ts`, variable
+`BACKEND_URL`), así que todo se sirve desde un único dominio.
 
 <!-- TODO: agregar captura -->
