@@ -18,7 +18,7 @@ import { Throttle } from '@nestjs/throttler';
 import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthService, TokenPair } from './auth.service';
+import { AuthService, TokenPair, frontendOrigin } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -41,7 +41,7 @@ const cookieBase = {
   secure: isProd,
   sameSite: isProd ? ('none' as const) : ('lax' as const),
 };
-const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+const frontendUrl = frontendOrigin();
 
 @ApiTags('auth')
 @Controller('auth')

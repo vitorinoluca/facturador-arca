@@ -34,7 +34,7 @@ function hashToken(token: string): string {
 
 // FRONTEND_URL puede traer varios orígenes separados por coma (ver main.ts, CORS)
 // — para armar un link de verdad hace falta uno solo, siempre el primero.
-function frontendOrigin(): string {
+export function frontendOrigin(): string {
   return (process.env.FRONTEND_URL ?? 'http://localhost:3000')
     .split(',')[0]
     .trim();
